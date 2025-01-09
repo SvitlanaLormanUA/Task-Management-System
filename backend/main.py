@@ -32,17 +32,25 @@ def create_user():
     phone_number = request.json.get("phoneNumber")
     location = request.json.get("location")
 
-    if User.query.filter_by(email=data.get("email")).first():
+    # Check if the user with this email already exists
+    if User.query.filter_by(email=email).first():  # Fixed the incorrect reference to 'data.get("email")'
         return jsonify({"error": "User with this email already exists."}), 400
+
+    # Validate required fields
     if not name or not email or not password:
-       phone_number = None
-       location = None
-       
+        phone_number = None
+        location = None
+
+    # Create the user
     user = User(name=name, email=email, password=password, phone_number=phone_number, location=location)
     db.session.add(user)
     db.session.commit()
 
     return jsonify(user.to_json()), 201
+@app.route("/users", methods=["GET"])
+def get_users():
+    users = User.query.all()
+    return jsonify([user.to_json() for user in users]), 200
 
 @app.route("/users/<int:task_id>", methods=["PUT"])
 def update_user(task_id):
