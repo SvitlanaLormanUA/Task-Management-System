@@ -17,6 +17,20 @@ class TaskStatus(Enum):
     IN_PROGRESS = "In Progress"
     COMPLETED = "Completed"
     CANCELED = "Canceled"
+
+class HabitDays(Enum):
+    SU = "Sunday"
+    MO = "Monday"
+    TU = "Tuesday"
+    WE = "Wednesday"
+    TH = "Thursday"
+    FR = "Friday"
+    SA = "Saturday"
+class HabitStatus(Enum):
+    IN_PROGRESS = "In Progress"
+    COMPLETED = "Completed"
+    CANCELED = "Canceled"
+    PLANNED = "Planned"
     
 
 class User(db.Model):
@@ -83,4 +97,24 @@ class Note(db.Model):
             "dateCreated": self.date_created,
             "dateUpdated": self.date_updated,
             "userId": self.user_id
+        }
+
+class Habit(db.Model):
+    __tablename__ = 'habits'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+
+    users = db.relationship('User', secondary=user_task, back_populates='habits')
+
+    status = db.Column(db.Enum(HabitStatus), nullable=False, default=HabitStatus.PLANNED)
+    habit_days = db.Column(db.Enum(HabitDays), nullable=True)
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+
+            "users": [user.id for user in self.users],
+            "status": self.status.value,
+            "habitDays": self.habit_days.value if self.habit_days else None
         }
