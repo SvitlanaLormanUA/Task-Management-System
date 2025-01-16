@@ -23,7 +23,7 @@ def enter_homepage():
     
     return jsonify({"message": f"Welcome, {user.name}!", "user_id": user.id}), 200
 
-
+#--------------------------------------------User--------------------------------------------
 @app.route("/users", methods=["POST"])
 def create_user():
     name = request.json.get("name")
@@ -98,7 +98,7 @@ def delete_user(user_id):
 
     return jsonify({"message": "User deleted successfully."}), 200
 
-
+#--------------------------------------------Note--------------------------------------------
 @app.route("/notes", methods=["PATCH"])
 def update_note():
     data = request.json
@@ -187,6 +187,7 @@ def create_note():
 
     return jsonify(note.to_json()), 201
 
+#--------------------------------------------Task--------------------------------------------
 @app.route("/tasks", methods=["GET"])
 def get_user_tasks():
     user_id = request.args.get("user_id")
@@ -413,3 +414,74 @@ if __name__ == "__main__":
         db.create_all()
 
     app.run(debug=True)
+
+#--------------------------------------------Goal--------------------------------------------
+
+def create_goal():
+    pass
+
+def get_goals_by_status():
+    pass
+
+def get_goals_by_period():
+    pass
+
+def get_user_goals():
+    pass
+
+def update_goal(goal_id):
+    goal = Goal.query.get(goal_id)
+    if not goal:
+        return jsonify({"error": "Goal not found."}), 404
+    #todo finish
+
+def get_goal(goal_id):
+    goal = Goal.query.get(goal_id)
+    if not goal:
+        return jsonify({"error": "Goal not found."}), 404
+    return jsonify(goal.to_json()), 200
+
+def delete_goal(goal_id):
+    goal = Goal.query.get(goal_id)
+    if not goal:
+        return jsonify({"error": "Goal not found."}), 404
+    db.session.delete(goal)
+    db.session.commit()
+    return jsonify({"message": "Goal deleted successfully."}), 200
+
+#--------------------------------------------Habit--------------------------------------------
+
+def create_habit():
+    pass
+
+def get_habits_by_status():
+    pass
+
+def get_habits_by_period():
+    pass
+
+def get_habits_by_user():
+    pass
+
+def get_user_habits():
+    pass
+
+def get_habit(habits_id):
+    habit = Habit.query.get(habits_id)
+    if not habit:
+        return jsonify({"error": "Habit not found."}), 404
+    return jsonify(habit.to_json()), 200
+
+def delete_habit(habits_id):
+    habit = Habit.query.get(habits_id)
+    if not habit:
+        return jsonify({"error": "Habit not found."}), 404
+    db.session.delete(habit)
+    db.session.commit()
+    return jsonify({"message": "Habit deleted successfully."}), 200
+
+def update_habit(habit_id):
+    habit = Habit.query.get(habit_id)
+    if not habit:
+        return jsonify({"error": "Habit not found."}), 404
+    #todo finish
