@@ -31,6 +31,18 @@ class HabitStatus(Enum):
     COMPLETED = "Completed"
     CANCELED = "Canceled"
     PLANNED = "Planned"
+
+class GoalPeriod(Enum):
+    MONTHLY = "Monthly"
+    WEEKLY = "Weekly"
+    YEARLY = "Yearly"
+    FIVE_YEAR = "Five Year"
+class GoalStatus(Enum):
+    IN_PROGRESS = "In Progress"
+    COMPLETED = "Completed"
+    CANCELED = "Canceled"
+    PLANNED = "Planned"
+
     
 
 class User(db.Model):
@@ -103,18 +115,41 @@ class Habit(db.Model):
     __tablename__ = 'habits'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
+    color = db.Column(db.String(8), nullable=False)
 
     users = db.relationship('User', secondary=user_task, back_populates='habits')
 
     status = db.Column(db.Enum(HabitStatus), nullable=False, default=HabitStatus.PLANNED)
-    habit_days = db.Column(db.Enum(HabitDays), nullable=True)
+    habit_days = db.Column(db.Enum(HabitDays), nullable=False, default=HabitDays.MO)
 
     def to_json(self):
         return {
             "id": self.id,
             "title": self.title,
-
+            "color": self.color,
             "users": [user.id for user in self.users],
             "status": self.status.value,
-            "habitDays": self.habit_days.value if self.habit_days else None
+            "habitDays": self.habit_days.value
+        }
+
+class Goal(db.Model):
+    __tablename__ = 'goals'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+
+
+    users = db.relationship('User', secondary=user_task, back_populates='habits')
+
+    status = db.Column(db.Enum(GoalStatus), nullable=False, default=GoalStatus.PLANNED)
+    period = db.Column(db.Enum(GoalPeriod), nullable=False, default = GoalPeriod.WEEKLY)
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "users": [user.id for user in self.users],
+            "status": self.status.value,
+            "goalPeriod": self.period.value
         }
