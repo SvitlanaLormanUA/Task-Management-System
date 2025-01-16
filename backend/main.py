@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from config import app, db
-from models import User, Task, TaskCategory, TaskStatus
+from models import User, Task, TaskCategory, TaskStatus, Note
 
 #TODO: додати функціонал для логіну / реєстрації / виходу з акаунта / зміни паролю
 
@@ -97,6 +97,95 @@ def delete_user(user_id):
     db.session.commit()
 
     return jsonify({"message": "User deleted successfully."}), 200
+
+
+@app.route("/notes", method=["PATCH"])
+def update_note():
+    data = request.json
+
+    note_id = data.get("note_id")
+    if not note_id:
+        return jsonify({"error": "Note ID is required."}), 400
+
+    try:
+        note_id = int(note_id)
+    except ValueError:
+        return jsonify({"error": "Invalid Note ID. Note ID must be a number."}), 400
+
+    note = Note.query.get(note_id)
+    if not note:
+        return jsonify({"error": "Note not found."}), 404
+
+    title = data.get("title")
+    if title:
+        note.title = title
+
+    content = data.get("content")
+    if content:
+        note.content = content
+
+    date_updated = data.get("dateUpdated")
+    if date_updated:
+        note.date_updated = date_updated
+
+    db.session.commit()
+
+    return jsonify(note.to_json()), 200
+
+@app.route("/notes", methods=["GET"])
+def get_user_notes():
+    user_id = request.args.get("user_id")
+    
+    if not user_id:
+        return jsonify({"error": "User ID is required."}), 400
+
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        return jsonify({"error": "Invalid User ID. User ID must be a number."}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+    
+    notes = user.notes
+    return jsonify([note.to_json() for note in notes]), 200
+
+@app.route("/notes", methods=["POST"]) 
+def create_note():
+    data = request.json
+
+    user_id = data.get("user_id")
+    if not user_id:
+        return jsonify({"error": "User ID is required to create a note."}), 400
+
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        return jsonify({"error": "Invalid User ID. User ID must be a number."}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+    date = data.get("date")
+    title = data.get("title")
+    content = data.get("content")
+    date_created = data.get("dateCreated")
+    date_updated = data.get("dateUpdated")
+
+    note = Note(
+        title=title,
+        content=content,
+        date_created=date_created,
+        date_updated=date_updated,
+    )
+
+    note.users.append(note)
+
+    db.session.add(note)
+    db.session.commit()
+
+    return jsonify(note.to_json()), 201
 
 @app.route("/tasks", methods=["GET"])
 def get_user_tasks():

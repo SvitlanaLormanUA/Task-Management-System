@@ -63,3 +63,24 @@ class Task(db.Model):
             "status": self.status.value,  
             "category": self.category.value if self.category else None
         }
+
+class Note(db.Model):
+    __tablename__ = 'notes'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=True)
+    date_created = db.Column(db.DateTime, nullable=True)
+    date_updated = db.Column(db.DateTime, nullable=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('notes', lazy=True))
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "content": self.content,
+            "dateCreated": self.date_created,
+            "dateUpdated": self.date_updated,
+            "userId": self.user_id
+        }
