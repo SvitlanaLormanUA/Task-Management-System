@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from config import app, db
-from models import User, Task, TaskCategory, TaskStatus, Note
+from models import User, Task, TaskCategory, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, HabitDays
 
 #TODO: додати функціонал для логіну / реєстрації / виходу з акаунта / зміни паролю
 
@@ -99,7 +99,7 @@ def delete_user(user_id):
     return jsonify({"message": "User deleted successfully."}), 200
 
 
-@app.route("/notes", method=["PATCH"])
+@app.route("/notes", methods=["PATCH"])
 def update_note():
     data = request.json
 
