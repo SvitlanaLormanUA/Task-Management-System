@@ -448,8 +448,8 @@ def create_goal():
         return jsonify({"error": "Please provide a title for the task."}), 400
 
     description = data.get("description")
-    status = data.get("status", "PENDING")
-    period = data.get("period")
+    status = data.get("status", "PLANNED")
+    period = data.get("period", "MONTHLY")
 
     try:
         status_enum = GoalStatus(status)
@@ -589,22 +589,110 @@ def delete_goal(goal_id):
 # --------------------------------------------Habit--------------------------------------------
 @app.route("/habits", methods=["POST"])
 def create_habit():
-    pass
+    data = request.json
+
+    user_id = data.get("user_id")
+    if not user_id:
+        return jsonify({"error": "User ID is required to create a habit."}), 400
+
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        return jsonify({"error": "Invalid User ID. User ID must be a number."}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+
+    title = data.get("title")
+    if not title:
+        return jsonify({"error": "Please provide a title for the habit."}), 400
+
+    color = data.get("color")
+    if not color:
+        return jsonify({"error": "Please provide a color for the habit."}), 400
+
+    status = data.get("status", "PLANNED")
+    habit_days = data.get("habitDays", "MO")
+
+    try:
+        status_enum = HabitStatus(status)
+    except ValueError:
+        return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in HabitStatus]}"}), 400
+
+    if habit_days:
+        try:
+            habit_days_enum = HabitDays(habit_days)
+        except ValueError:
+            return jsonify({"error": f"Invalid habit days. Valid habit days are: {[c.value for c in HabitDays]}"}), 400
+
+    habit = Habit(
+        title=title,
+        status=status_enum,
+        color=color,
+        habit_days=habit_days_enum
+    )
+
+    habit.users.append(user)
+
+    db.session.add(habit)
+    db.session.commit()
+
+    return jsonify(habit.to_json()), 201
 
 
 @app.route("/habits/status", methods=["GET"])
 def get_habits_by_status():
-    pass
+    status = request.args.get("status")
+
+    # for debugging purposes
+    if not status:
+        return jsonify({"error": "Status is required."}), 400
+
+    try:
+        status_enum = HabitStatus(status)
+    except ValueError:
+        return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in HabitStatus]}"}), 400
+
+    habits = Habit.query.filter_by(status=status_enum).all()
+    return jsonify([habit.to_json() for habit in habits]), 200
 
 
-@app.route("/habits/period", methods=["GET"])
-def get_habits_by_period():
-    pass
+@app.route("/habits/days", methods=["GET"])
+def get_habits_by_days():
+    habit_days = request.args.get("habitDays")
+
+    # for debugging purposes
+    if not habit_days:
+        return jsonify({"error": "Period is required."}), 400
+
+    try:
+        habit_days_enum = HabitDays(habit_days)
+    except ValueError:
+        return jsonify({"error": f"Invalid period. Valid periods are: {[s.value for s in HabitDays]}"}), 400
+
+    habits = Habit.query.filter_by(status=habit_days_enum).all()
+    return jsonify([habit.to_json() for habit in habits]), 200
 
 
 @app.route("/habits", methods=["GET"])
 def get_user_habits():
-    pass
+    user_id = request.args.get("user_id")
+
+    if not user_id:
+        return jsonify({"error": "User ID is required."}), 400
+
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        return jsonify({"error": "Invalid User ID. User ID must be a number."}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+
+    habits = user.habits
+    return jsonify([h.to_json() for h in habits]), 200
 
 
 @app.route("/habits/<int:habit_id>", methods=["GET"])
@@ -630,7 +718,34 @@ def update_habit(habit_id):
     habit = Habit.query.get(habit_id)
     if not habit:
         return jsonify({"error": "Habit not found."}), 404
-    # todo finish
+    data = request.json
+
+    title = data.get("title")
+    if title:
+        habit.title = title
+
+    color = data.get("color")
+    if not color:
+        return jsonify({"error": "Please provide a color for the habit."}), 400
+
+    status = data.get("status")
+    try:
+        status_enum = HabitStatus(status)
+    except ValueError:
+        return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in HabitStatus]}"}), 400
+    habit.status = status_enum
+
+    habit_days = data.get("habitDays")
+    if habit_days:
+        try:
+            habit_days_enum = HabitDays(habit_days)
+        except ValueError:
+            return jsonify({"error": f"Invalid habit days. Valid habit days are: {[c.value for c in HabitDays]}"}), 400
+        habit.period = habit_days_enum
+
+    db.session.commit()
+
+    return jsonify(habit.to_json()), 200
 
 
 # --------------------------------------------main--------------------------------------------
