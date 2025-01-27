@@ -1,29 +1,32 @@
 from flask import Flask, request, jsonify
 from config import app, db
-from models import User, Task, TaskCategory, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, HabitDays
+from models import User, Task, TaskCategory, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, \
+    HabitDays
 
-#TODO: додати функціонал для логіну / реєстрації / виходу з акаунта / зміни паролю
 
-#персоналізована сторінка?
+# TODO: додати функціонал для логіну / реєстрації / виходу з акаунта / зміни паролю
+
+# персоналізована сторінка?
 @app.route("/", methods=["GET"])
 def enter_homepage():
     user_id = request.args.get("user_id")
-    
+
     if not user_id:
         return jsonify("Welcome to the homepage! To personalize your experience, provide your User ID."), 200
-    
+
     try:
-        user_id = int(user_id)  
+        user_id = int(user_id)
     except ValueError:
         return jsonify({"error": "Invalid User ID. User ID must be a number."}), 400
 
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
-    
+
     return jsonify({"message": f"Welcome, {user.name}!", "user_id": user.id}), 200
 
-#--------------------------------------------User--------------------------------------------
+
+# --------------------------------------------User--------------------------------------------
 @app.route("/users", methods=["POST"])
 def create_user():
     name = request.json.get("name")
@@ -47,10 +50,13 @@ def create_user():
     db.session.commit()
 
     return jsonify(user.to_json()), 201
+
+
 @app.route("/users", methods=["GET"])
 def get_users():
     users = User.query.all()
     return jsonify([user.to_json() for user in users]), 200
+
 
 @app.route("/users/<int:task_id>", methods=["PUT"])
 def update_user(task_id):
@@ -84,6 +90,7 @@ def update_user(task_id):
 
     return jsonify(user.to_json()), 200
 
+
 @app.route("/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
     user = User.query.get(user_id)
@@ -91,14 +98,15 @@ def delete_user(user_id):
         return jsonify({"error": "User not found."}), 404
 
     for task in user.tasks:
-        task.users.remove(user) #треба з assigned tasks видалити юзера, а таски лишаються неперепривʼязаними?
-     
+        task.users.remove(user)  # треба з assigned tasks видалити юзера, а таски лишаються неперепривʼязаними?
+
     db.session.delete(user)
     db.session.commit()
 
     return jsonify({"message": "User deleted successfully."}), 200
 
-#--------------------------------------------Note--------------------------------------------
+
+# --------------------------------------------Note--------------------------------------------
 @app.route("/notes", methods=["PATCH"])
 def update_note():
     data = request.json
@@ -132,10 +140,11 @@ def update_note():
 
     return jsonify(note.to_json()), 200
 
+
 @app.route("/notes", methods=["GET"])
 def get_user_notes():
     user_id = request.args.get("user_id")
-    
+
     if not user_id:
         return jsonify({"error": "User ID is required."}), 400
 
@@ -147,11 +156,12 @@ def get_user_notes():
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found."}), 404
-    
+
     notes = user.notes
     return jsonify([note.to_json() for note in notes]), 200
 
-@app.route("/notes", methods=["POST"]) 
+
+@app.route("/notes", methods=["POST"])
 def create_note():
     data = request.json
 
@@ -187,11 +197,12 @@ def create_note():
 
     return jsonify(note.to_json()), 201
 
-#--------------------------------------------Task--------------------------------------------
+
+# --------------------------------------------Task--------------------------------------------
 @app.route("/tasks", methods=["GET"])
 def get_user_tasks():
     user_id = request.args.get("user_id")
-    
+
     if not user_id:
         return jsonify({"error": "User ID is required."}), 400
 
@@ -203,14 +214,14 @@ def get_user_tasks():
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found."}), 404
-    
+
     tasks = user.tasks
     return jsonify([task.to_json() for task in tasks]), 200
 
 
 @app.route("/tasks", methods=["POST"])
 def create_task():
-    data = request.json  
+    data = request.json
 
     user_id = data.get("user_id")
     if not user_id:
@@ -229,13 +240,11 @@ def create_task():
     if not title:
         return jsonify({"error": "Please provide a title for the task."}), 400
 
-
     description = data.get("description")
-    date_assigned = data.get("dateAssigned")  
-    date_due = data.get("dateDue")         
-    status = data.get("status", "PENDING")   
-    category = data.get("category")         
-
+    date_assigned = data.get("dateAssigned")
+    date_due = data.get("dateDue")
+    status = data.get("status", "PENDING")
+    category = data.get("category")
 
     try:
         status_enum = TaskStatus(status)
@@ -248,7 +257,7 @@ def create_task():
             category_enum = TaskCategory(category)
         except ValueError:
             return jsonify({"error": f"Invalid category. Valid categories are: {[c.value for c in TaskCategory]}"}), 400
-        
+
     task = Task(
         title=title,
         description=description,
@@ -258,7 +267,6 @@ def create_task():
         category=category_enum,
     )
 
-
     task.users.append(user)
 
     db.session.add(task)
@@ -266,11 +274,12 @@ def create_task():
 
     return jsonify(task.to_json()), 201
 
+
 @app.route("/tasks/status", methods=["GET"])
 def get_tasks_by_status():
     status = request.args.get("status")
 
-    #for debugging purposes
+    # for debugging purposes
     if not status:
         return jsonify({"error": "Status is required."}), 400
 
@@ -281,6 +290,7 @@ def get_tasks_by_status():
 
     tasks = Task.query.filter_by(status=status_enum).all()
     return jsonify([task.to_json() for task in tasks]), 200
+
 
 @app.route("/tasks/category", methods=["GET"])
 def get_tasks_by_category():
@@ -297,6 +307,7 @@ def get_tasks_by_category():
     tasks = Task.query.filter_by(category=category_enum).all()
     return jsonify([task.to_json() for task in tasks]), 200
 
+
 @app.route("/tasks/dateAssigned", methods=["GET"])
 def get_tasks_by_date_assigned():
     date_assigned = request.args.get("dateAssigned")
@@ -306,6 +317,7 @@ def get_tasks_by_date_assigned():
 
     tasks = Task.query.filter_by(date_assigned=date_assigned).all()
     return jsonify([task.to_json() for task in tasks]), 200
+
 
 @app.route("/tasks/dateDue", methods=["GET"])
 def get_tasks_by_date_due():
@@ -362,6 +374,7 @@ def update_task(task_id):
 
     return jsonify(task.to_json()), 200
 
+
 @app.route("/tasks/<int:task_id>", methods=["GET"])
 def get_task(task_id):
     task = Task.query.get(task_id)
@@ -369,6 +382,7 @@ def get_task(task_id):
         return jsonify({"error": "Task not found."}), 404
 
     return jsonify(task.to_json()), 200
+
 
 @app.route("/tasks/<int:task_id>/users", methods=["GET"])
 def assign_user_to_task(task_id):
@@ -395,52 +409,174 @@ def assign_user_to_task(task_id):
 
     return jsonify(task.to_json()), 200
 
+
 @app.route("/tasks/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
     task = Task.query.get(task_id)
     if not task:
         return jsonify({"error": "Task not found."}), 404
-    
+
     for user in task.users:
-        user.tasks.remove(task) #про всяк випадок? 
+        user.tasks.remove(task)  # про всяк випадок?
 
     db.session.delete(task)
     db.session.commit()
 
     return jsonify({"message": "Task deleted successfully."}), 200
 
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
 
-    app.run(debug=True)
-
-#--------------------------------------------Goal--------------------------------------------
-
+# --------------------------------------------Goal--------------------------------------------
+@app.route("/goals", methods=["POST"])
 def create_goal():
-    pass
+    data = request.json
 
+    user_id = data.get("user_id")
+    if not user_id:
+        return jsonify({"error": "User ID is required to create a goal."}), 400
+
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        return jsonify({"error": "Invalid User ID. User ID must be a number."}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+
+    title = data.get("title")
+    if not title:
+        return jsonify({"error": "Please provide a title for the task."}), 400
+
+    description = data.get("description")
+    status = data.get("status", "PENDING")
+    period = data.get("period")
+
+    try:
+        status_enum = GoalStatus(status)
+    except ValueError:
+        return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in GoalStatus]}"}), 400
+
+    if period:
+        try:
+            period_enum = GoalPeriod(period)
+        except ValueError:
+            return jsonify({"error": f"Invalid period. Valid periods are: {[c.value for c in GoalPeriod]}"}), 400
+
+    goal = Goal(
+        title=title,
+        description=description,
+        status=status_enum,
+        period=period_enum
+    )
+
+    goal.users.append(user)
+
+    db.session.add(goal)
+    db.session.commit()
+
+    return jsonify(goal.to_json()), 201
+
+
+@app.route("/goals/status", methods=["GET"])
 def get_goals_by_status():
-    pass
+    status = request.args.get("status")
 
+    # for debugging purposes
+    if not status:
+        return jsonify({"error": "Status is required."}), 400
+
+    try:
+        status_enum = GoalStatus(status)
+    except ValueError:
+        return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in GoalStatus]}"}), 400
+
+    goals = Goal.query.filter_by(status=status_enum).all()
+    return jsonify([goal.to_json() for goal in goals]), 200
+
+
+@app.route("/goals/period", methods=["GET"])
 def get_goals_by_period():
-    pass
+    period = request.args.get("period")
 
+    # for debugging purposes
+    if not period:
+        return jsonify({"error": "Period is required."}), 400
+
+    try:
+        period_enum = GoalPeriod(period)
+    except ValueError:
+        return jsonify({"error": f"Invalid period. Valid periods are: {[s.value for s in GoalPeriod]}"}), 400
+
+    goals = Goal.query.filter_by(status=period_enum).all()
+    return jsonify([goal.to_json() for goal in goals]), 200
+
+
+@app.route("/goals", methods=["GET"])
 def get_user_goals():
-    pass
+    user_id = request.args.get("user_id")
 
+    if not user_id:
+        return jsonify({"error": "User ID is required."}), 400
+
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        return jsonify({"error": "Invalid User ID. User ID must be a number."}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+
+    goals = user.goals
+    return jsonify([goal.to_json() for goal in goals]), 200
+
+
+@app.route("/goals/<int:goal_id>", methods=["PUT"])
 def update_goal(goal_id):
     goal = Goal.query.get(goal_id)
     if not goal:
         return jsonify({"error": "Goal not found."}), 404
-    #todo finish
+    data = request.json
 
+    title = data.get("title")
+    if title:
+        goal.title = title
+
+    description = data.get("description")
+    if description:
+        goal.description = description
+
+    status = data.get("status")
+    if status:
+        try:
+            status_enum = GoalStatus(status)
+        except ValueError:
+            return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in GoalStatus]}"}), 400
+        goal.status = status_enum
+
+    period = data.get("period")
+    if period:
+        try:
+            period_enum = GoalPeriod(period)
+        except ValueError:
+            return jsonify({"error": f"Invalid period. Valid periods are: {[c.value for c in GoalPeriod]}"}), 400
+
+        goal.period = period_enum
+
+    db.session.commit()
+
+    return jsonify(goal.to_json()), 200
+
+
+@app.route("/goals/<int:goal_id>", methods=["GET"])
 def get_goal(goal_id):
     goal = Goal.query.get(goal_id)
     if not goal:
         return jsonify({"error": "Goal not found."}), 404
     return jsonify(goal.to_json()), 200
 
+
+@app.route("/goals/<int:goal_id>", methods=["DELETE"])
 def delete_goal(goal_id):
     goal = Goal.query.get(goal_id)
     if not goal:
@@ -449,29 +585,37 @@ def delete_goal(goal_id):
     db.session.commit()
     return jsonify({"message": "Goal deleted successfully."}), 200
 
-#--------------------------------------------Habit--------------------------------------------
 
+# --------------------------------------------Habit--------------------------------------------
+@app.route("/habits", methods=["POST"])
 def create_habit():
     pass
 
+
+@app.route("/habits/status", methods=["GET"])
 def get_habits_by_status():
     pass
 
+
+@app.route("/habits/period", methods=["GET"])
 def get_habits_by_period():
     pass
 
-def get_habits_by_user():
-    pass
 
+@app.route("/habits", methods=["GET"])
 def get_user_habits():
     pass
 
+
+@app.route("/habits/<int:habit_id>", methods=["GET"])
 def get_habit(habits_id):
     habit = Habit.query.get(habits_id)
     if not habit:
         return jsonify({"error": "Habit not found."}), 404
     return jsonify(habit.to_json()), 200
 
+
+@app.route("/habits/<int:habit_id>", methods=["DELETE"])
 def delete_habit(habits_id):
     habit = Habit.query.get(habits_id)
     if not habit:
@@ -480,8 +624,18 @@ def delete_habit(habits_id):
     db.session.commit()
     return jsonify({"message": "Habit deleted successfully."}), 200
 
+
+@app.route("/habits/<int:habit_id>", methods=["PUT"])
 def update_habit(habit_id):
     habit = Habit.query.get(habit_id)
     if not habit:
         return jsonify({"error": "Habit not found."}), 404
-    #todo finish
+    # todo finish
+
+
+# --------------------------------------------main--------------------------------------------
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+
+    app.run(debug=True)
