@@ -1,0 +1,23 @@
+{
+  "name": "task-management-system",
+  "version": "1.0.0",
+  "description": "Stack: Python, React, MySQL +  authentication?",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SvitlanaLormanUA/Task-Management-System.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SvitlanaLormanUA/Task-Management-System/issues"
+  },
+  "homepage": "https://github.com/SvitlanaLormanUA/Task-Management-System#readme",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.0.0",
+    "tailwindcss": "^4.0.0"
+  }
+}
