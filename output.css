@@ -695,6 +695,9 @@
       max-width: 96rem !important;
     }
   }
+  .m-5 {
+    margin: calc(var(--spacing) * 5);
+  }
   .box-border {
     box-sizing: border-box;
   }
