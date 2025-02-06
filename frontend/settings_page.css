@@ -28,3 +28,10 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+.theme-box{
+    background-color: #FFFFFF;
+    border-radius: 20%;
+    display: flex;
+    flex-direction: row;
+}
