@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
+from flask import request, jsonify
 from config import app, db
 from models import User, Task, TaskCategory, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, \
     HabitDays
+
 
 
 # TODO: додати функціонал для логіну / реєстрації / виходу з акаунта / зміни паролю
@@ -749,6 +750,8 @@ def update_habit(habit_id):
 
 
 # --------------------------------------------main--------------------------------------------
+
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
