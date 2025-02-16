@@ -11,3 +11,4 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///task-management-syst.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+

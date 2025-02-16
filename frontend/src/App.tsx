@@ -1,17 +1,10 @@
 
-import './App.css'
-
+import {  RouterProvider } from 'react-router-dom';
+import router from "./Router.js"
 function App() {
-  function getData() {
-    fetch('http://127.0.0.1:5000')
-      .then((response) => response.json())
-      .then((data) => console.log(data))
-  }
-
   return (
     <>
-      <h1>React App</h1>
-      <button onClick={getData}>Get Data</button>
+       <RouterProvider router={router} />
     </>
   )
 }

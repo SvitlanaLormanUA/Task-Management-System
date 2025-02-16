@@ -76,10 +76,11 @@ class User(db.Model):
     password = db.Column(db.String(100), nullable=False)
     phone_number = db.Column(db.String(20), nullable=True)
     location = db.Column(db.String(200), nullable=True)
+
     tasks = db.relationship('Task', secondary=user_task, back_populates='users')
     goals = db.relationship('Goal', secondary=user_goal, back_populates='users')
     habits = db.relationship('Habit', secondary=user_habit, back_populates='users')
-    notes = db.relationship('Note', secondary=user_note, back_populates='users')
+    notes = db.relationship('Note', back_populates='user')  # Removed many-to-many reference
 
     def to_json(self):
         return {
@@ -117,7 +118,6 @@ class Task(db.Model):
             "category": self.category.value if self.category else None
         }
 
-
 class Note(db.Model):
     __tablename__ = 'notes'
     id = db.Column(db.Integer, primary_key=True)
@@ -127,7 +127,7 @@ class Note(db.Model):
     date_updated = db.Column(db.DateTime, nullable=True)
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    user = db.relationship('User', backref=db.backref('notes', lazy=True))
+    user = db.relationship('User', back_populates='notes')  
 
     def to_json(self):
         return {
@@ -146,7 +146,7 @@ class Habit(db.Model):
     title = db.Column(db.String(200), nullable=False)
     color = db.Column(db.String(8), nullable=False)
 
-    users = db.relationship('User', secondary=user_task, back_populates='habits')
+    users = db.relationship('User', secondary=user_habit, back_populates='habits')  # Fixed secondary table
 
     status = db.Column(db.Enum(HabitStatus), nullable=False, default=HabitStatus.PLANNED)
     habit_days = db.Column(db.Enum(HabitDays), nullable=False, default=HabitDays.MO)
@@ -168,7 +168,7 @@ class Goal(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
 
-    users = db.relationship('User', secondary=user_task, back_populates='habits')
+    users = db.relationship('User', secondary=user_goal, back_populates='goals')  # Fixed secondary table
 
     status = db.Column(db.Enum(GoalStatus), nullable=False, default=GoalStatus.PLANNED)
     period = db.Column(db.Enum(GoalPeriod), nullable=False, default=GoalPeriod.WEEKLY)
