@@ -1,5 +1,7 @@
 # Node modules
 node_modules/
+/.pnp
+.pnp.js
 
 # Production build output
 build/
@@ -32,10 +34,10 @@ yarn-error.log*
 # Test coverage output
 coverage/
 
-# Tailwind cache (іноді створюється)
+# Tailwind cache
 .tailwindcache/
 
-# Optional lock files (звичайно їх тримають, але можна виключити)
+# Optional lock files
 # package-lock.json
 # yarn.lock
 
