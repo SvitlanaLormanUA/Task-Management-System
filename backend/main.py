@@ -1,9 +1,7 @@
 from flask import request, jsonify
-from config import app, db
+from config import app, db, sync_db
 from models import User, Task, TaskCategory, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, \
     HabitDays
-
-
 
 # TODO: додати функціонал для логіну / реєстрації / виходу з акаунта / зміни паролю
 
@@ -30,28 +28,43 @@ def enter_homepage():
 # --------------------------------------------User--------------------------------------------
 @app.route("/users", methods=["POST"])
 def create_user():
-    name = request.json.get("name")
-    email = request.json.get("email")
-    password = request.json.get("password")
-    phone_number = request.json.get("phoneNumber")
-    location = request.json.get("location")
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 415
+    
+    data = request.get_json()
+    
+    if not all([data.get("name"), data.get("email"), data.get("password")]):
+        return jsonify({"error": "Name, email and password are required"}), 400
 
-    # Check if the user with this email already exists
-    if User.query.filter_by(email=email).first():  # Fixed the incorrect reference to 'data.get("email")'
-        return jsonify({"error": "User with this email already exists."}), 400
+    try:
+        if User.query.filter_by(email=data["email"]).first():
+            return jsonify({"error": "User already exists"}), 400
 
-    # Validate required fields
-    if not name or not email or not password:
-        phone_number = None
-        location = None
+        user = User(
+            name=data["name"],
+            email=data["email"],
+            password=data["password"],  
+            phone_number=data.get("phoneNumber"),
+            location=data.get("location")
+        )
+        
+        db.session.add(user)
+        db.session.commit()
 
-    # Create the user
-    user = User(name=name, email=email, password=password, phone_number=phone_number, location=location)
-    db.session.add(user)
-    db.session.commit()
+        try:
+            wrapper = app.config['SQLALCHEMY_ENGINE_OPTIONS']['creator']
+            wrapper.sync()
+        except Exception as e:
+            print(f"Sync failed but user created locally: {e}")
 
-    return jsonify(user.to_json()), 201
+        db.session.refresh(user)
+        wrapper.sync()
+        
+        return jsonify(user.to_json()), 201
 
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/users", methods=["GET"])
 def get_users():
@@ -272,6 +285,7 @@ def create_task():
 
     db.session.add(task)
     db.session.commit()
+
 
     return jsonify(task.to_json()), 201
 
@@ -751,9 +765,18 @@ def update_habit(habit_id):
 
 # --------------------------------------------main--------------------------------------------
 
-
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
-
+        from config import sync_db
+        try:
+            sync_db()
+            db.create_all()
+        except Exception as e:
+            print(f"Initialization error: {e}")
+            sync_db()  
+            db.create_all()
     app.run(debug=True)
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
