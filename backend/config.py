@@ -6,6 +6,13 @@ from dotenv import load_dotenv
 import os
 import sqlite3
 from sqlalchemy.pool import StaticPool
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
 
 load_dotenv()
 

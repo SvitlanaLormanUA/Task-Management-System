@@ -1,0 +1,23 @@
+{
+  "name": "task-management-system",
+  "version": "1.0.0",
+  "description": "Stack: Python, React, MySQL +  authentication?  <p> run \"npm install\" </p>",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "frontend": "cd frontend && npm run dev",
+    "backend": "python3 backend/main.py",
+    "start": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SvitlanaLormanUA/Task-Management-System.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SvitlanaLormanUA/Task-Management-System/issues"
+  },
+  "homepage": "https://github.com/SvitlanaLormanUA/Task-Management-System#readme"
+}
