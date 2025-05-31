@@ -46,3 +46,6 @@ coverage/
 *.bak
 *.tmp
 
+*.db
+*.sqlite
+*.sql

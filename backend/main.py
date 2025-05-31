@@ -2,7 +2,7 @@ from flask import request, jsonify
 from config import app, db, sync_db
 from models import User, Task, TaskCategory, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, \
     HabitDays
-
+from config import sync_db
 # TODO: додати функціонал для логіну / реєстрації / виходу з акаунта / зміни паролю
 
 # персоналізована сторінка?
@@ -22,7 +22,7 @@ def enter_homepage():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    return jsonify({"message": f"Welcome, {user.name}!", "user_id": user.id}), 200
+    return jsonify({"message": f"Welcome, {user.name}!"}), 200
 
 
 # --------------------------------------------User--------------------------------------------
@@ -54,6 +54,7 @@ def create_user():
         try:
             wrapper = app.config['SQLALCHEMY_ENGINE_OPTIONS']['creator']
             wrapper.sync()
+            sync_db()
         except Exception as e:
             print(f"Sync failed but user created locally: {e}")
 
@@ -174,6 +175,13 @@ def get_user_notes():
     notes = user.notes
     return jsonify([note.to_json() for note in notes]), 200
 
+@app.route("/notes/<int:note_id>", methods=["GET"])
+def get_note(note_id):
+    note = Note.query.get(note_id)
+    if not note:
+        return jsonify({"error": "Note not found."}), 404
+
+    return jsonify(note.to_json()), 200
 
 @app.route("/notes", methods=["POST"])
 def create_note():
@@ -211,6 +219,41 @@ def create_note():
 
     return jsonify(note.to_json()), 201
 
+@app.route("/notes/<int:note_id>", methods=["DELETE"])
+def delete_note(note_id):
+    note = Note.query.get(note_id)
+    if not note:
+        return jsonify({"error": "Note not found."}), 404
+
+    for user in note.users:
+        user.notes.remove(note)
+    db.session.delete(note)
+    db.session.commit()
+    return jsonify({"message": "Note deleted successfully."}), 200
+
+@app.route("/notes/<int:note_id>", methods=["PUT"])
+def update_note_by_id(note_id):
+    note = Note.query.get(note_id)
+    if not note:
+        return jsonify({"error": "Note not found."}), 404
+
+    data = request.json
+
+    title = data.get("title")
+    if title:
+        note.title = title
+
+    content = data.get("content")
+    if content:
+        note.content = content
+
+    date_updated = data.get("dateUpdated")
+    if date_updated:
+        note.date_updated = date_updated
+
+    db.session.commit()
+
+    return jsonify(note.to_json()), 200
 
 # --------------------------------------------Task--------------------------------------------
 @app.route("/tasks", methods=["GET"])
@@ -440,6 +483,13 @@ def delete_task(task_id):
     return jsonify({"message": "Task deleted successfully."}), 200
 
 
+@app.route("/tasks/<int:task_id>", methods=["GET"])
+def get_task_by_id(task_id):
+    task = Task.query.get(task_id)
+    if not task:
+        return jsonify({"error": "Task not found."}), 404
+
+    return jsonify(task.to_json()), 200
 # --------------------------------------------Goal--------------------------------------------
 @app.route("/goals", methods=["POST"])
 def create_goal():
@@ -767,7 +817,6 @@ def update_habit(habit_id):
 
 if __name__ == "__main__":
     with app.app_context():
-        from config import sync_db
         try:
             sync_db()
             db.create_all()

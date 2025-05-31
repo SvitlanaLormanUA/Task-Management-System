@@ -64,9 +64,24 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'connect_args': {'check_same_thread': False}
 }
 
+
+import libsql_experimental as libsql
+
+
+
 db = SQLAlchemy(app)
 
 def sync_db():
-    wrapper = app.config['SQLALCHEMY_ENGINE_OPTIONS']['creator']
-    wrapper.sync()
-    print("Database synced successfully with Turso")
+    conn = libsql.connect(local_db_path, sync_url=url, auth_token=auth_token)
+
+    # Внесення змін у базу
+    conn.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER);")
+    conn.execute("INSERT INTO users(id) VALUES (1);")
+    conn.commit()
+
+    # Синхронізація з Turso
+    try:
+        conn.sync()
+        print("Database synced successfully with Turso")
+    except Exception as e:
+        print(f"Sync failed: {e}")
