@@ -17,7 +17,8 @@ from flask_login import (
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
+
 
 # Turso
 url = os.getenv("DB_LINK")
@@ -63,11 +64,6 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'poolclass': StaticPool,
     'connect_args': {'check_same_thread': False}
 }
-
-
-import libsql_experimental as libsql
-
-
 
 db = SQLAlchemy(app)
 
