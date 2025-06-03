@@ -49,3 +49,4 @@ coverage/
 *.db
 *.sqlite
 *.sql
+*.db-info
