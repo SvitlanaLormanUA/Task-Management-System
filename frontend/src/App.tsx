@@ -5,6 +5,9 @@ import SettingsPage from './pages/SettingsPage';
 import NotificationSettings from "@/pages/NotificationSettings.tsx";
 import PrivacySettings from "@/pages/PrivacySettings.tsx";
 import LanguageAndRegion from "@/pages/LanguageAndRegion.tsx";
+import LoginPage from "@/pages/LoginPage.tsx";
+import SignupPage from "@/pages/SignupPage.tsx";
+import ErrorPage from "@/pages/ErrorPage.tsx";
 
 function App() {
 
@@ -12,12 +15,15 @@ function App() {
         <div className='bg-blue-100'>
             <BrowserRouter>
                 <Routes>
-                    <Route path="/" element={<LanguageAndRegion/>}>
+                    <Route path="/" element={<ErrorPage/>}>
                         <Route path="/profile" element={<ProfilePage/>}/>
                         <Route path="/settings" element={<SettingsPage/>}/>
                         <Route path="/settings/notification-settings" element={<NotificationSettings/>}/>
                         <Route path="/settings/privacy-settings" element={<PrivacySettings/>}/>
                         <Route path="/settings/language-settings" element={<LanguageAndRegion/>}/>
+                        <Route path="/login" element={<LoginPage/>}/>
+                        <Route path="/sign-up" element={<SignupPage/>}/>
+                        <Route path="/error" element={<ErrorPage/>}/>
 
                     </Route>
                 </Routes>
