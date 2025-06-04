@@ -1,0 +1,50 @@
+.privacy-settings {
+  background-color: #dfeaf6;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.privacy-settings .title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.privacy-settings label {
+  display: block;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.privacy-settings input[type="password"] {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.reset-button,
+.request-button {
+  margin-top: 20px;
+  padding: 10px 30px;
+  border: none;
+  border-radius: 9999px;
+  background-color: #83bcb5;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.reset-button:hover,
+.request-button:hover {
+  background-color: #6da9a1;
+}
+
+.request-section {
+  margin-top: 30px;
+  font-size: 14px;
+}

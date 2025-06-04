@@ -7,7 +7,7 @@ const apiStore = {
   get: async <T>(endpoint: string, params: Record<string, string | number> = {}): Promise<T> => {
     const url = new URL(`${API_URL}${endpoint}`);
     Object.keys(params).forEach(key => url.searchParams.append(key, params[key].toString()));
-    const response = await fetch(url, {
+    const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -18,7 +18,7 @@ const apiStore = {
     return response.json() as Promise<T>;
   },
   post: async <T>(endpoint: string, data: unknown): Promise<T> => {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -30,7 +30,7 @@ const apiStore = {
     return response.json() as Promise<T>;
   },
   put: async <T>(endpoint: string, data: unknown): Promise<T> => {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -42,8 +42,20 @@ const apiStore = {
     return response.json() as Promise<T>;
   },
   delete: async <T>(endpoint: string): Promise<T> => {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
       method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+      const errorData: Error = await response.json();
+     throw new Error(errorData?.message || JSON.stringify(errorData) || 'Network response was not ok');
+    }
+    return response.json() as Promise<T>;
+  },
+
+  options: async<T>(endpoint: string): Promise<T> => {
+    const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
+      method: 'OPTIONS',
       headers: { 'Content-Type': 'application/json' },
     });
     if (!response.ok) {
@@ -55,7 +67,21 @@ const apiStore = {
 };
 
 // User endpoints
-export const fetchDefaultHomepage = () => apiStore.get<string>('/');
+
+// Припустимо, що apiStore - це якийсь HTTP клієнт (axios або власний)
+
+export const fetchDefaultHomepage = (): Promise<string> => {
+  return fetch('http://127.0.0.1:5000/')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.text();  // або response.json(), якщо потрібен JSON
+    });
+};
+
+
+//export const fetchDefaultHomepage = () => apiStore.get<string>('/');
 export const fetchUsers = () => apiStore.get<User[]>('/users');
 export const createUser = (data: { name: string; email: string; password: string; phoneNumber?: string; location?: string }) =>
   apiStore.post<User>('/users', data);

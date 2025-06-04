@@ -1,8 +1,8 @@
-from flask import request, jsonify
-from config import app, db, sync_db
+from flask import request, jsonify, Response
+from config import app, db
 from models import User, Task, TaskCategory, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, \
     HabitDays
-from config import sync_db
+#from config import sync_db
 # TODO: додати функціонал для логіну / реєстрації / виходу з акаунта / зміни паролю
 
 # персоналізована сторінка?
@@ -54,7 +54,7 @@ def create_user():
         try:
             wrapper = app.config['SQLALCHEMY_ENGINE_OPTIONS']['creator']
             wrapper.sync()
-            sync_db()
+            #sync_db()
         except Exception as e:
             print(f"Sync failed but user created locally: {e}")
 
@@ -815,14 +815,19 @@ def update_habit(habit_id):
 
 # --------------------------------------------main--------------------------------------------
 
+@app.before_request
+def basic_authentication():
+    if request.method.lower() == 'options':
+        return Response()
+
 if __name__ == "__main__":
     with app.app_context():
         try:
-            sync_db()
+            #sync_db()
             db.create_all()
         except Exception as e:
             print(f"Initialization error: {e}")
-            sync_db()  
+           # sync_db()
             db.create_all()
     app.run(debug=True)
 
