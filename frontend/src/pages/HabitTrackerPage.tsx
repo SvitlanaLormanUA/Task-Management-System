@@ -1,16 +1,43 @@
 import {Card, CardContent} from "@/components/Card";
 import {Button} from "@/components/Button";
 import {ChevronLeft, ChevronRight, Check} from "lucide-react";
+import { useState } from 'react';
 import Header from "@/components/Header.tsx";
 import Square from '@/components/Square';
+import CreateHabitModal from '@/components/CreateHabitModal';
+
 
 const HabitTrackerPage = () => {
     const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
     const yogaDays = [0, 1, 2, 6]; // Monday, Tuesday, Wednesday, Sunday
     const readingDays = [4, 5]; // Friday, Saturday
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+
     return (
         <div className="flex bg-yellow-50 min-h-screen">
+
+            {/* Floating "+" button */}
+            <button
+                onClick={() => setIsModalOpen(true)}
+                className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#FBD443] text-white text-3xl flex items-center justify-center shadow-lg hover:bg-[#FBD443] transition"
+            >
+                +
+            </button>
+
+            {/* Modal */}
+            {isModalOpen && (
+                <CreateHabitModal
+                    onClose={() => setIsModalOpen(false)}
+                    onSubmit={() => {
+                        console.log('New habit:');
+                        setIsModalOpen(false);
+                    }}
+                />
+            )}
+
+
             <Header className="absolute top-4 left-4 z-10 md:top-6 md:left-6"/>
 
             {/* Sidebar */}
