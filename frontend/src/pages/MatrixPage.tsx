@@ -1,12 +1,5 @@
 import Header from '@/components/Header.tsx';
 import Square from '@/components/Square';
-import {
-  CheckSquare,
-  Clock,
-  Calendar,
-  AlertCircle,
-  X,
-} from 'lucide-react';
 
 
 const MatrixPage = () => {
