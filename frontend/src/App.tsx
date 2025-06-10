@@ -11,6 +11,7 @@ import ErrorPage from '@/pages/ErrorPage.tsx';
 import HabitTrackerPage from '@/pages/HabitTrackerPage.tsx';
 import CalendarPage from '@/pages/CalendarPage.tsx';
 import ToDoListPage from '@/pages/ToDoListPage.tsx';
+import MatrixPage from '@/pages/MatrixPage.tsx';
 
 function App() {
 
@@ -18,7 +19,7 @@ function App() {
     <div className="bg-blue-100">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<ToDoListPage />}>
+          <Route path="/" element={<MatrixPage />}>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/settings/notification-settings" element={<NotificationSettings />} />
@@ -30,7 +31,7 @@ function App() {
             <Route path="/habit-tracker" element={<HabitTrackerPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/todo-list" element={<ToDoListPage />} />
-
+            <Route path="/matrix" element={<MatrixPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

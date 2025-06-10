@@ -72,9 +72,9 @@ const HabitTrackerPage = () => {
           {[
             { title: 'calendar', color: '#FAFAF5' },
             { title: 'matrix', color: '#FBD443' },
-            { title: 'quick notes', color: '#FEF9F5' },
+           // { title: 'quick notes', color: '#FEF9F5' },
             { title: 'to-do lists', color: '#FFF7D8' },
-            { title: 'goals', color: '#F3D9DA' },
+            { title: 'goals | beta', color: '#F3D9DA' },
           ].map((tab) => (
             <Square
               key={tab.title}
