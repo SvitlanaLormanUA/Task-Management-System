@@ -12,13 +12,13 @@ const MainPage = () => (
         <Header className="absolute top-4 left-4 z-10 md:top-6 md:left-6"/>
         <div className="flex flex-row md:flex-col justify-center gap-8 w-full max-w-4xl grow">
             <div className="flex flex-col md:flex-row justify-center gap-8">
-                <Square title="calendar" color="#FAFAF5">
+                <Square title="calendar" color="#FAFAF5" onClick={() => window.location.href = '/calendar'}>
                     <img src="./images/calendar.webp" alt="Calendar Icon" className='mt-4'/>
                 </Square>
-                <Square title="to-do list" color="#FAFAF5">
+                <Square title="to-do list" color="#FAFAF5" onClick={() => window.location.href = '/todo'}>
                     <img src="./images/todolist.webp" alt="To-Do List" className='mt-4'/>
                 </Square>
-                <Square title="habit tracker" color="#FFF7D8">
+                <Square title="habit tracker" color="#FFF7D8" onClick={() => window.location.href = '/habit-tracker'}>
                     <img src="./images/habits.webp" alt="Habit Traker" className='mt-4'/>
                 </Square>
             </div>

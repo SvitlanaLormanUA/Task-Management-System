@@ -87,6 +87,10 @@ export const createUser = (data: { name: string; email: string; password: string
   apiStore.post<User>('/users', data);
 export const updateUser = (userId: number, data: Partial<User>) => apiStore.put<User>(`/users/${userId}`, data);
 export const deleteUser = (userId: number) => apiStore.delete<{ message: string }>(`/users/${userId}`);
+export const loginUser = (data: { email: string; password: string }) =>
+  apiStore.post<{ access_token: string; refresh_token: string; user: User }>('/login', data);
+export const signupUser = (data: { name: string; email: string; password: string; phoneNumber?: string; location?: string }) =>
+  apiStore.post<{ access_token: string; refresh_token: string; user: User }>('/signup', data);
 
 // Task endpoints
 export const fetchTasks = (userId: number) => apiStore.get<Task[]>('/tasks', { user_id: userId });

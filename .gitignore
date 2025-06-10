@@ -50,3 +50,5 @@ coverage/
 *.sqlite
 *.sql
 *.db-info
+*.db-shm
+*.db-wal

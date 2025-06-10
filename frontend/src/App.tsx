@@ -12,27 +12,26 @@ import HabitTrackerPage from "@/pages/HabitTrackerPage.tsx";
 import CalendarPage from "@/pages/CalendarPage.tsx";
 
 function App() {
-
-    return (
-        <div className='bg-blue-100'>
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/" element={<CalendarPage/>}>
-                        <Route path="/profile" element={<ProfilePage/>}/>
-                        <Route path="/settings" element={<SettingsPage/>}/>
-                        <Route path="/settings/notification-settings" element={<NotificationSettings/>}/>
-                        <Route path="/settings/privacy-settings" element={<PrivacySettings/>}/>
-                        <Route path="/settings/language-settings" element={<LanguageAndRegion/>}/>
-                        <Route path="/login" element={<LoginPage/>}/>
-                        <Route path="/sign-up" element={<SignupPage/>}/>
-                        <Route path="/error" element={<ErrorPage/>}/>
-                        <Route path="/habit-tracker" element={<HabitTrackerPage/>}/>
-                        <Route path="/calendar" element={<CalendarPage/>}/>
-                    </Route>
-                </Routes>
-            </BrowserRouter>
-        </div>
-    );
+  return (
+    <div className='bg-blue-100'>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<MainPage/>}/>
+          <Route path="/login" element={<LoginPage/>}/>
+          <Route path="/sign-up" element={<SignupPage/>}/>
+          <Route path="/profile" element={<ProfilePage/>}/>
+          <Route path="/settings" element={<SettingsPage/>}/>
+          <Route path="/settings/notification-settings" element={<NotificationSettings/>}/>
+          <Route path="/settings/privacy-settings" element={<PrivacySettings/>}/>
+          <Route path="/settings/language-settings" element={<LanguageAndRegion/>}/>
+          <Route path="/habit-tracker" element={<HabitTrackerPage/>}/>
+          <Route path="/calendar" element={<CalendarPage/>}/>
+          <Route path="/error" element={<ErrorPage/>}/>
+          <Route path="*" element={<ErrorPage/>}/> 
+        </Routes>
+      </BrowserRouter>
+    </div>
+  );
 }
 
 export default App;

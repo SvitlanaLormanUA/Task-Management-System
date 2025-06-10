@@ -15,7 +15,7 @@ from datetime import timedelta
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
+CORS(app)
 
 
 # Turso

@@ -36,7 +36,7 @@ def enter_homepage():
 
 
 # --------------------------------------------User--------------------------------------------
-@app.route("/signin", methods=["POST"])
+@app.route("/signup", methods=["POST"])
 def create_user():
     if not request.is_json:
         return jsonify({"error": "Request must be JSON"}), 415
@@ -48,7 +48,7 @@ def create_user():
 
     try:
         if User.query.filter_by(email=data["email"]).first():
-            return jsonify({"error": "User already exists"}), 400
+            return jsonify({"error": "User already exists"}), 409
 
         # Хешування паролю перед збереженням
         hashed_password = bcrypt.hashpw(data["password"].encode('utf-8'), bcrypt.gensalt())
