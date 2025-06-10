@@ -11,25 +11,28 @@ import ErrorPage from '@/pages/ErrorPage.tsx';
 import HabitTrackerPage from '@/pages/HabitTrackerPage.tsx';
 import CalendarPage from '@/pages/CalendarPage.tsx';
 import ToDoListPage from '@/pages/ToDoListPage.tsx';
+import MatrixPage from '@/pages/MatrixPage.tsx';
 
 function App() {
+
   return (
-    <div className='bg-blue-100'>
+    <div className="bg-blue-100">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<MainPage/>}/>
-          <Route path="/login" element={<LoginPage/>}/>
-          <Route path="/sign-up" element={<SignupPage/>}/>
-          <Route path="/profile" element={<ProfilePage/>}/>
-          <Route path="/settings" element={<SettingsPage/>}/>
-          <Route path="/settings/notification-settings" element={<NotificationSettings/>}/>
-          <Route path="/settings/privacy-settings" element={<PrivacySettings/>}/>
-          <Route path="/settings/language-settings" element={<LanguageAndRegion/>}/>
-          <Route path="/habit-tracker" element={<HabitTrackerPage/>}/>
-          <Route path="/calendar" element={<CalendarPage/>}/>
-          <Route path="/error" element={<ErrorPage/>}/>
-          <Route path="/todo" element={<ToDoListPage/>}/>
-          <Route path="*" element={<ErrorPage/>}/> 
+          <Route path="/" element={<MatrixPage />}>
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings/notification-settings" element={<NotificationSettings />} />
+            <Route path="/settings/privacy-settings" element={<PrivacySettings />} />
+            <Route path="/settings/language-settings" element={<LanguageAndRegion />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/sign-up" element={<SignupPage />} />
+            <Route path="/error" element={<ErrorPage />} />
+            <Route path="/habit-tracker" element={<HabitTrackerPage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/todo-list" element={<ToDoListPage />} />
+            <Route path="/matrix" element={<MatrixPage />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </div>
