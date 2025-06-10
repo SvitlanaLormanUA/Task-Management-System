@@ -9,6 +9,7 @@ import LoginPage from "@/pages/LoginPage.tsx";
 import SignupPage from "@/pages/SignupPage.tsx";
 import ErrorPage from "@/pages/ErrorPage.tsx";
 import HabitTrackerPage from "@/pages/HabitTrackerPage.tsx";
+import CalendarPage from "@/pages/CalendarPage.tsx";
 
 function App() {
 
@@ -16,7 +17,7 @@ function App() {
         <div className='bg-blue-100'>
             <BrowserRouter>
                 <Routes>
-                    <Route path="/" element={<HabitTrackerPage/>}>
+                    <Route path="/" element={<CalendarPage/>}>
                         <Route path="/profile" element={<ProfilePage/>}/>
                         <Route path="/settings" element={<SettingsPage/>}/>
                         <Route path="/settings/notification-settings" element={<NotificationSettings/>}/>
@@ -26,8 +27,7 @@ function App() {
                         <Route path="/sign-up" element={<SignupPage/>}/>
                         <Route path="/error" element={<ErrorPage/>}/>
                         <Route path="/habit-tracker" element={<HabitTrackerPage/>}/>
-
-
+                        <Route path="/calendar" element={<CalendarPage/>}/>
                     </Route>
                 </Routes>
             </BrowserRouter>
