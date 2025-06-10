@@ -6,13 +6,11 @@ from dotenv import load_dotenv
 import os
 import sqlite3
 from sqlalchemy.pool import StaticPool
-from flask_login import (
-    LoginManager,
-    current_user,
-    login_required,
-    login_user,
-    logout_user,
+from flask_jwt_extended import (
+    JWTManager, jwt_required, create_access_token,
+    get_jwt_identity
 )
+from datetime import timedelta
 
 load_dotenv()
 
@@ -64,6 +62,10 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'poolclass': StaticPool,
     'connect_args': {'check_same_thread': False}
 }
+app.config['JWT_SECRET_KEY'] = '103ewihbjfrje'  
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=7)
+jwt = JWTManager(app)
 
 db = SQLAlchemy(app)
 

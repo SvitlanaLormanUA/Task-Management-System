@@ -2,13 +2,23 @@ from flask import request, jsonify, Response
 from config import app, db
 from models import User, Task, TaskCategory, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, \
     HabitDays
+import bcrypt
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    jwt_required,
+    get_jwt_identity,
+    get_jwt
+)
+from datetime import timedelta
 #from config import sync_db
 # TODO: додати функціонал для логіну / реєстрації / виходу з акаунта / зміни паролю
 
 # персоналізована сторінка?
 @app.route("/", methods=["GET"])
+@jwt_required() 
 def enter_homepage():
-    user_id = request.args.get("user_id")
+    user_id = get_jwt_identity()
 
     if not user_id:
         return jsonify("Welcome to the homepage! To personalize your experience, provide your User ID."), 200
@@ -26,7 +36,7 @@ def enter_homepage():
 
 
 # --------------------------------------------User--------------------------------------------
-@app.route("/users", methods=["POST"])
+@app.route("/signin", methods=["POST"])
 def create_user():
     if not request.is_json:
         return jsonify({"error": "Request must be JSON"}), 415
@@ -40,10 +50,13 @@ def create_user():
         if User.query.filter_by(email=data["email"]).first():
             return jsonify({"error": "User already exists"}), 400
 
+        # Хешування паролю перед збереженням
+        hashed_password = bcrypt.hashpw(data["password"].encode('utf-8'), bcrypt.gensalt())
+
         user = User(
             name=data["name"],
             email=data["email"],
-            password=data["password"],  
+            password=hashed_password.decode('utf-8'),  # Зберігаємо хеш як строку
             phone_number=data.get("phoneNumber"),
             location=data.get("location")
         )
@@ -54,7 +67,6 @@ def create_user():
         try:
             wrapper = app.config['SQLALCHEMY_ENGINE_OPTIONS']['creator']
             wrapper.sync()
-            #sync_db()
         except Exception as e:
             print(f"Sync failed but user created locally: {e}")
 
@@ -67,15 +79,51 @@ def create_user():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@app.route("/users", methods=["GET"])
-def get_users():
-    users = User.query.all()
-    return jsonify([user.to_json() for user in users]), 200
 
+@app.route('/login', methods=['POST'])
+def login():
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 415
+
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+        return jsonify({"error": "Invalid password"}), 401
+
+    access_token = create_access_token(
+        identity=str(user.id),
+        expires_delta=timedelta(minutes=15)  
+    )
+
+    refresh_token = create_refresh_token(
+        identity=str(user.id),
+        expires_delta=timedelta(days=7)  # Довгоживучий токен
+    )
+
+    # Зберігаємо refresh token в базі (для можливості логауту)
+    user.refresh_token = refresh_token
+    db.session.commit()
+
+    return jsonify({
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": user.to_json()  # Без пароля!
+    }), 200
 
 @app.route("/users/<int:task_id>", methods=["PUT"])
+@jwt_required()
 def update_user(task_id):
-    user = User.query.get(task_id)
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found."}), 404
 
@@ -105,24 +153,38 @@ def update_user(task_id):
 
     return jsonify(user.to_json()), 200
 
+@app.route('/logout', methods=['DELETE'])
+@jwt_required(refresh=True)  
+def logout():
+    user_id = get_jwt_identity()
 
-@app.route("/users/<int:user_id>", methods=["DELETE"])
-def delete_user(user_id):
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "User not found."}), 404
-
-    for task in user.tasks:
-        task.users.remove(user)  # треба з assigned tasks видалити юзера, а таски лишаються неперепривʼязаними?
-
-    db.session.delete(user)
+        return jsonify({"error": "User not found"}), 404
+    
+    user.refresh_token = None
     db.session.commit()
+    
+    return jsonify({"message": "Successfully logged out"}), 200
 
-    return jsonify({"message": "User deleted successfully."}), 200
-
-
+@app.route('/refresh', methods=['POST'])
+@jwt_required()
+def refresh():
+    current_user = get_jwt_identity()
+    
+    user = User.query.get(current_user)
+    if not user or user.refresh_token != get_jwt()['jti']:
+        return jsonify({"error": "Invalid refresh token"}), 401
+    
+    # Генеруємо новий access token
+    new_access_token = create_access_token(
+        identity=current_user,
+        expires_delta=timedelta(minutes=15))
+    
+    return jsonify({"access_token": new_access_token}), 200
 # --------------------------------------------Note--------------------------------------------
 @app.route("/notes", methods=["PATCH"])
+@jwt_required()
 def update_note():
     data = request.json
 
@@ -157,6 +219,7 @@ def update_note():
 
 
 @app.route("/notes", methods=["GET"])
+@jwt_required()
 def get_user_notes():
     user_id = request.args.get("user_id")
 
@@ -176,6 +239,7 @@ def get_user_notes():
     return jsonify([note.to_json() for note in notes]), 200
 
 @app.route("/notes/<int:note_id>", methods=["GET"])
+@jwt_required()
 def get_note(note_id):
     note = Note.query.get(note_id)
     if not note:
@@ -184,6 +248,7 @@ def get_note(note_id):
     return jsonify(note.to_json()), 200
 
 @app.route("/notes", methods=["POST"])
+@jwt_required()
 def create_note():
     data = request.json
 
@@ -220,6 +285,7 @@ def create_note():
     return jsonify(note.to_json()), 201
 
 @app.route("/notes/<int:note_id>", methods=["DELETE"])
+@jwt_required()
 def delete_note(note_id):
     note = Note.query.get(note_id)
     if not note:
@@ -232,6 +298,7 @@ def delete_note(note_id):
     return jsonify({"message": "Note deleted successfully."}), 200
 
 @app.route("/notes/<int:note_id>", methods=["PUT"])
+@jwt_required()
 def update_note_by_id(note_id):
     note = Note.query.get(note_id)
     if not note:
@@ -257,8 +324,9 @@ def update_note_by_id(note_id):
 
 # --------------------------------------------Task--------------------------------------------
 @app.route("/tasks", methods=["GET"])
+@jwt_required() 
 def get_user_tasks():
-    user_id = request.args.get("user_id")
+    user_id = get_jwt_identity()
 
     if not user_id:
         return jsonify({"error": "User ID is required."}), 400
@@ -277,10 +345,11 @@ def get_user_tasks():
 
 
 @app.route("/tasks", methods=["POST"])
+@jwt_required()
 def create_task():
     data = request.json
 
-    user_id = data.get("user_id")
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "User ID is required to create a task."}), 400
 
@@ -334,6 +403,7 @@ def create_task():
 
 
 @app.route("/tasks/status", methods=["GET"])
+@jwt_required()
 def get_tasks_by_status():
     status = request.args.get("status")
 
@@ -351,6 +421,7 @@ def get_tasks_by_status():
 
 
 @app.route("/tasks/category", methods=["GET"])
+@jwt_required()
 def get_tasks_by_category():
     category = request.args.get("category")
 
@@ -367,6 +438,7 @@ def get_tasks_by_category():
 
 
 @app.route("/tasks/dateAssigned", methods=["GET"])
+@jwt_required()
 def get_tasks_by_date_assigned():
     date_assigned = request.args.get("dateAssigned")
 
@@ -378,6 +450,7 @@ def get_tasks_by_date_assigned():
 
 
 @app.route("/tasks/dateDue", methods=["GET"])
+@jwt_required()
 def get_tasks_by_date_due():
     date_due = request.args.get("dateDue")
 
@@ -389,6 +462,7 @@ def get_tasks_by_date_due():
 
 
 @app.route("/tasks/<int:task_id>", methods=["PUT"])
+@jwt_required()
 def update_task(task_id):
     task = Task.query.get(task_id)
     if not task:
@@ -434,6 +508,7 @@ def update_task(task_id):
 
 
 @app.route("/tasks/<int:task_id>", methods=["GET"])
+@jwt_required()
 def get_task(task_id):
     task = Task.query.get(task_id)
     if not task:
@@ -443,6 +518,7 @@ def get_task(task_id):
 
 
 @app.route("/tasks/<int:task_id>/users", methods=["GET"])
+@jwt_required()
 def assign_user_to_task(task_id):
     task = Task.query.get(task_id)
     if not task:
@@ -469,6 +545,7 @@ def assign_user_to_task(task_id):
 
 
 @app.route("/tasks/<int:task_id>", methods=["DELETE"])
+@jwt_required()
 def delete_task(task_id):
     task = Task.query.get(task_id)
     if not task:
@@ -484,6 +561,7 @@ def delete_task(task_id):
 
 
 @app.route("/tasks/<int:task_id>", methods=["GET"])
+@jwt_required()
 def get_task_by_id(task_id):
     task = Task.query.get(task_id)
     if not task:
@@ -492,10 +570,12 @@ def get_task_by_id(task_id):
     return jsonify(task.to_json()), 200
 # --------------------------------------------Goal--------------------------------------------
 @app.route("/goals", methods=["POST"])
+@jwt_required()
 def create_goal():
     data = request.json
 
-    user_id = data.get("user_id")
+    user_id = get_jwt_identity()
+
     if not user_id:
         return jsonify({"error": "User ID is required to create a goal."}), 400
 
@@ -543,6 +623,7 @@ def create_goal():
 
 
 @app.route("/goals/status", methods=["GET"])
+@jwt_required()
 def get_goals_by_status():
     status = request.args.get("status")
 
@@ -560,6 +641,7 @@ def get_goals_by_status():
 
 
 @app.route("/goals/period", methods=["GET"])
+@jwt_required()
 def get_goals_by_period():
     period = request.args.get("period")
 
@@ -577,6 +659,7 @@ def get_goals_by_period():
 
 
 @app.route("/goals", methods=["GET"])
+@jwt_required()
 def get_user_goals():
     user_id = request.args.get("user_id")
 
@@ -597,6 +680,7 @@ def get_user_goals():
 
 
 @app.route("/goals/<int:goal_id>", methods=["PUT"])
+@jwt_required()
 def update_goal(goal_id):
     goal = Goal.query.get(goal_id)
     if not goal:
@@ -634,6 +718,7 @@ def update_goal(goal_id):
 
 
 @app.route("/goals/<int:goal_id>", methods=["GET"])
+@jwt_required()
 def get_goal(goal_id):
     goal = Goal.query.get(goal_id)
     if not goal:
@@ -642,6 +727,7 @@ def get_goal(goal_id):
 
 
 @app.route("/goals/<int:goal_id>", methods=["DELETE"])
+@jwt_required()
 def delete_goal(goal_id):
     goal = Goal.query.get(goal_id)
     if not goal:
@@ -653,6 +739,7 @@ def delete_goal(goal_id):
 
 # --------------------------------------------Habit--------------------------------------------
 @app.route("/habits", methods=["POST"])
+@jwt_required()
 def create_habit():
     data = request.json
 
@@ -707,6 +794,7 @@ def create_habit():
 
 
 @app.route("/habits/status", methods=["GET"])
+@jwt_required()
 def get_habits_by_status():
     status = request.args.get("status")
 
@@ -724,6 +812,7 @@ def get_habits_by_status():
 
 
 @app.route("/habits/days", methods=["GET"])
+@jwt_required()
 def get_habits_by_days():
     habit_days = request.args.get("habitDays")
 
@@ -741,6 +830,7 @@ def get_habits_by_days():
 
 
 @app.route("/habits", methods=["GET"])
+@jwt_required()
 def get_user_habits():
     user_id = request.args.get("user_id")
 
@@ -761,6 +851,7 @@ def get_user_habits():
 
 
 @app.route("/habits/<int:habit_id>", methods=["GET"])
+@jwt_required()
 def get_habit(habits_id):
     habit = Habit.query.get(habits_id)
     if not habit:
@@ -769,6 +860,7 @@ def get_habit(habits_id):
 
 
 @app.route("/habits/<int:habit_id>", methods=["DELETE"])
+@jwt_required()
 def delete_habit(habits_id):
     habit = Habit.query.get(habits_id)
     if not habit:
@@ -779,6 +871,7 @@ def delete_habit(habits_id):
 
 
 @app.route("/habits/<int:habit_id>", methods=["PUT"])
+@jwt_required()
 def update_habit(habit_id):
     habit = Habit.query.get(habit_id)
     if not habit:

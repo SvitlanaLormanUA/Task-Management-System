@@ -31,9 +31,11 @@
     "classnames": "^2.5.1",
     "concurrently": "^9.1.2",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
     "react-redux": "^9.2.0"
   },
   "devDependencies": {
+    "@types/date-fns": "^2.5.3",
     "react-router-dom": "^7.6.1"
   }
 }

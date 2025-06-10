@@ -76,6 +76,7 @@ class User(db.Model):
     password = db.Column(db.String(100), nullable=False)
     phone_number = db.Column(db.String(20), nullable=True)
     location = db.Column(db.String(200), nullable=True)
+    refresh_token = db.Column(db.String(200), nullable=True)
 
     tasks = db.relationship('Task', secondary=user_task, back_populates='users')
     goals = db.relationship('Goal', secondary=user_goal, back_populates='users')
