@@ -1,15 +1,16 @@
 import MainPage from './pages/MainPage';
-import {BrowserRouter, Route, Routes} from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
-import NotificationSettings from "@/pages/NotificationSettings.tsx";
-import PrivacySettings from "@/pages/PrivacySettings.tsx";
-import LanguageAndRegion from "@/pages/LanguageAndRegion.tsx";
-import LoginPage from "@/pages/LoginPage.tsx";
-import SignupPage from "@/pages/SignupPage.tsx";
-import ErrorPage from "@/pages/ErrorPage.tsx";
-import HabitTrackerPage from "@/pages/HabitTrackerPage.tsx";
-import CalendarPage from "@/pages/CalendarPage.tsx";
+import NotificationSettings from '@/pages/NotificationSettings.tsx';
+import PrivacySettings from '@/pages/PrivacySettings.tsx';
+import LanguageAndRegion from '@/pages/LanguageAndRegion.tsx';
+import LoginPage from '@/pages/LoginPage.tsx';
+import SignupPage from '@/pages/SignupPage.tsx';
+import ErrorPage from '@/pages/ErrorPage.tsx';
+import HabitTrackerPage from '@/pages/HabitTrackerPage.tsx';
+import CalendarPage from '@/pages/CalendarPage.tsx';
+import ToDoListPage from '@/pages/ToDoListPage.tsx';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/habit-tracker" element={<HabitTrackerPage/>}/>
           <Route path="/calendar" element={<CalendarPage/>}/>
           <Route path="/error" element={<ErrorPage/>}/>
+          <Route path="/todo" element={<ToDoListPage/>}/>
           <Route path="*" element={<ErrorPage/>}/> 
         </Routes>
       </BrowserRouter>
