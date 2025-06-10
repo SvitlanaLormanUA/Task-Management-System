@@ -4,7 +4,7 @@ const ProfilePage = () => {
     <div className="w-full max-w-2xl mx-auto bg-[#d7e9f7] rounded-lg shadow relative overflow-hidden">
         {/* Фонові хмари */}
         <img
-          src="./images/cloud.webp"
+            src="./images/cloud.webp"
           alt="clouds"
           className="absolute inset-0 w-full h-full object-cover z-0"
         />
