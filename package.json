@@ -31,6 +31,7 @@
     "classnames": "^2.5.1",
     "concurrently": "^9.1.2",
     "cors": "^2.8.5",
+    "lucide-react": "^0.514.0",
     "react-redux": "^9.2.0"
   },
   "devDependencies": {

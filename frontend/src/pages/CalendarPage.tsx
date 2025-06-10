@@ -1,28 +1,11 @@
-import {useState} from 'react';
 import Header from "@/components/Header.tsx";
 import Square from '@/components/Square';
-import CreateHabitModal from '@/components/CreateHabitModal';
 import Calendar from '@/components/Calendar.tsx';
 
 const CalendarPage = () => {
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-
     return (
         <div className="flex bg-blue-100 min-h-screen">
-
-            {/* Modal */}
-            {isModalOpen && (
-                <CreateHabitModal
-                    onClose={() => setIsModalOpen(false)}
-                    onSubmit={() => {
-                        console.log('New habit:');
-                        setIsModalOpen(false);
-                    }}
-                />
-            )}
-
 
             <Header className="absolute top-4 left-4 z-10 md:top-6 md:left-6"/>
 
@@ -42,6 +25,14 @@ const CalendarPage = () => {
                 <div className="w-36 h-36 rounded-full overflow-hidden mb-4">
                     <img src="./images/bunny.webp" alt="Character" className="w-full h-full object-cover"/>
                 </div>
+
+                <button
+                    onClick={() => window.history.back()}
+                    className="flex items-center gap-2 text-gray-700 hover:text-black mb-4"
+                >
+                    <span role="img" aria-label="back">←</span>
+                    Back
+                </button>
             </aside>
 
             {/* Main Content */}
