@@ -170,23 +170,25 @@ const CalendarPage = () => {
         </button>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top menu using Square */}
-        <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4">
-          {[
-            { title: "habit tracker", color: "#FAFAF5" },
-            { title: "matrix", color: "#FBD443" },
-            { title: "to-do lists", color: "#FFF7D8" },
-          ].map((tab) => (
-            <Square
-              key={tab.title}
-              title={tab.title}
-              color={tab.color || "white"}
-              className="w-36 h-24 p-4"
-            />
-          ))}
-        </div>
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col">
+                {/* Top menu using Square */}
+                <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4">
+                    {[
+                        {title: "habit tracker", color: "#FAFAF5"},
+                        {title: "matrix", color: "#FBD443"},
+                        //  {title: "quick notes", color: "#FEF9F5"},
+                        {title: "to-do lists", color: "#FFF7D8"},
+                        {title: "goals | beta", color: "#F3D9DA"},
+                    ].map((tab) => (
+                        <Square
+                            key={tab.title}
+                            title={tab.title}
+                            color={tab.color || "white"}
+                            className="w-36 h-24 p-4"
+                        />
+                    ))}
+                </div>
 
         <div className="min-h-screen bg-blue-100 p-4">
           {/* Add Task Button */}
