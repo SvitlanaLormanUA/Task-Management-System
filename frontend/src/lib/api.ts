@@ -1,5 +1,5 @@
 import type { User, Task, Note, Habit, Goal, TaskStatus, TaskCategory, GoalStatus, GoalPeriod, HabitStatus, HabitDays } from './types';
-
+import Cookies from 'js-cookie';
 
 const API_URL = 'http://localhost:5000';
 
@@ -17,19 +17,31 @@ const apiStore = {
     }
     return response.json() as Promise<T>;
   },
-  post: async <T>(endpoint: string, data: unknown): Promise<T> => {
-    const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const errorData: Error = await response.json();
-      throw new Error(errorData?.message || JSON.stringify(errorData) || 'Network response was not ok');
-    }
-    return response.json() as Promise<T>;
-  },
+ post: async <T>(endpoint: string, data: unknown): Promise<T> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  
+  // Get token from cookies
+  const token = Cookies.get('access_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData: Error = await response.json();
+    throw new Error(errorData?.message || JSON.stringify(errorData) || 'Network response was not ok');
+  }
+  return response.json() as Promise<T>;
+},
   put: async <T>(endpoint: string, data: unknown): Promise<T> => {
+    
     const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -91,6 +103,7 @@ export const loginUser = (data: { email: string; password: string }) =>
   apiStore.post<{ access_token: string; refresh_token: string; user: User }>('/login', data);
 export const signupUser = (data: { name: string; email: string; password: string; phoneNumber?: string; location?: string }) =>
   apiStore.post<{ access_token: string; refresh_token: string; user: User }>('/signup', data);
+export const getUserByEmail = (email: string) => apiStore.get<User>(`/users/${email}`, { email });
 
 // Task endpoints
 export const fetchTasks = (userId: number) => apiStore.get<Task[]>('/tasks', { user_id: userId });
@@ -99,7 +112,7 @@ export const fetchTasksByStatus = (status: TaskStatus) => apiStore.get<Task[]>('
 export const fetchTasksByCategory = (category: TaskCategory) => apiStore.get<Task[]>('/tasks/category', { category });
 export const fetchTasksByDateAssigned = (dateAssigned: string) => apiStore.get<Task[]>('/tasks/dateAssigned', { dateAssigned });
 export const fetchTasksByDateDue = (dateDue: string) => apiStore.get<Task[]>('/tasks/dateDue', { dateDue });
-export const createTask = (data: { user_id: number; title: string; description?: string; dateAssigned?: string; dateDue?: string; status?: TaskStatus; category?: TaskCategory }) =>
+export const createTask = (data: { title: string; description?: string; dateAssigned?: string; dateDue?: string; status?: TaskStatus; category?: TaskCategory, access_token?: string }) =>
   apiStore.post<Task>('/tasks', data);
 export const updateTask = (taskId: number, data: Partial<Task>) => apiStore.put<Task>(`/tasks/${taskId}`, data);
 export const deleteTask = (taskId: number) => apiStore.delete<{ message: string }>(`/tasks/${taskId}`);

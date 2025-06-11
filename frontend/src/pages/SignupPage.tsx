@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signupUser } from '@/lib/api';
-
+import Cookies from 'js-cookie';
 const SignupPage = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -45,15 +45,19 @@ const SignupPage = () => {
     setError('');
 
     try {
-      const response = await signupUser({
+      const data = await signupUser({
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
       });
 
-      localStorage.setItem('access_token', response.access_token);
-      localStorage.setItem('refresh_token', response.refresh_token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      Cookies.set('access_token', data.access_token, { expires: 7 });
+      Cookies.set('refresh_token', data.refresh_token, { expires: 7 });
+      Cookies.set('user', JSON.stringify(formData.email.trim().toLowerCase()), { expires: 7 });
+
+        localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('refresh_token', data.refresh_token);
+    
       setSuccess(true);
 
       setTimeout(() => navigate('/'), 2000);

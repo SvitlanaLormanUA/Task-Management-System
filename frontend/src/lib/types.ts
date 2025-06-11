@@ -1,48 +1,22 @@
-// types.ts
-export enum TaskCategory {
-  WORK = "Work",
-  HOME = "Home",
-  STUDY = "Study",
-  OTHER = "Other",
-}
 
-export enum TaskStatus {
-  PENDING = "Pending",
-  IN_PROGRESS = "In Progress",
-  COMPLETED = "Completed",
-  CANCELED = "Canceled",
-}
+export type TaskCategory = "Work" | "Home" | "Study" | "Other";
 
-export enum HabitDays {
-  SU = "Sunday",
-  MO = "Monday",
-  TU = "Tuesday",
-  WE = "Wednesday",
-  TH = "Thursday",
-  FR = "Friday",
-  SA = "Saturday",
-}
+export type TaskStatus = "Pending" | "In Progress" | "Completed" | "Canceled";
 
-export enum HabitStatus {
-  IN_PROGRESS = "In Progress",
-  COMPLETED = "Completed",
-  CANCELED = "Canceled",
-  PLANNED = "Planned",
-}
+export type HabitDays =
+  | "Sunday"
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday";
 
-export enum GoalPeriod {
-  MONTHLY = "Monthly",
-  WEEKLY = "Weekly",
-  YEARLY = "Yearly",
-  FIVE_YEAR = "Five Year",
-}
+export type HabitStatus = "In Progress" | "Completed" | "Canceled" | "Planned";
 
-export enum GoalStatus {
-  IN_PROGRESS = "In Progress",
-  COMPLETED = "Completed",
-  CANCELED = "Canceled",
-  PLANNED = "Planned",
-}
+export type GoalPeriod = "Monthly" | "Weekly" | "Yearly" | "Five Year";
+
+export type GoalStatus = "In Progress" | "Completed" | "Canceled" | "Planned";
 
 export interface User {
   id: number;

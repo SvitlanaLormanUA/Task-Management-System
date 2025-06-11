@@ -11,8 +11,7 @@ from flask_jwt_extended import (
     get_jwt
 )
 from datetime import timedelta
-#from config import sync_db
-# TODO: додати функціонал для логіну / реєстрації / виходу з акаунта / зміни паролю
+from dateutil.parser import parse 
 
 # персоналізована сторінка?
 @app.route("/", methods=["GET"])
@@ -50,19 +49,22 @@ def create_user():
         if User.query.filter_by(email=data["email"]).first():
             return jsonify({"error": "User already exists"}), 409
 
-        # Хешування паролю перед збереженням
         hashed_password = bcrypt.hashpw(data["password"].encode('utf-8'), bcrypt.gensalt())
 
         user = User(
             name=data["name"],
             email=data["email"],
-            password=hashed_password.decode('utf-8'),  # Зберігаємо хеш як строку
+            password=hashed_password.decode('utf-8'),
             phone_number=data.get("phoneNumber"),
             location=data.get("location")
         )
         
         db.session.add(user)
         db.session.commit()
+
+        # Create tokens for the new user
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_access_token(identity=str(user.id))
 
         try:
             wrapper = app.config['SQLALCHEMY_ENGINE_OPTIONS']['creator']
@@ -73,13 +75,16 @@ def create_user():
         db.session.refresh(user)
         wrapper.sync()
         
-        return jsonify(user.to_json()), 201
+        return jsonify({
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": user.to_json()
+        }), 201
 
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-
-
+    
 @app.route('/login', methods=['POST'])
 def login():
     if not request.is_json:
@@ -118,6 +123,14 @@ def login():
         "refresh_token": refresh_token,
         "user": user.to_json()  # Без пароля!
     }), 200
+
+
+@app.route("/users/<email>", methods=["GET"])
+def get_user_by_email(email):
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+    return jsonify(user.to_json()), 200
 
 @app.route("/users/<int:task_id>", methods=["PUT"])
 @jwt_required()
@@ -343,7 +356,6 @@ def get_user_tasks():
     tasks = user.tasks
     return jsonify([task.to_json() for task in tasks]), 200
 
-
 @app.route("/tasks", methods=["POST"])
 @jwt_required()
 def create_task():
@@ -369,8 +381,20 @@ def create_task():
     description = data.get("description")
     date_assigned = data.get("dateAssigned")
     date_due = data.get("dateDue")
-    status = data.get("status", "PENDING")
+    status = data.get("status", "Pending")
     category = data.get("category")
+
+    # Parse date strings into datetime objects
+    def parse_date(date_str):
+        if not date_str:
+            return None
+        try:
+            return parse(date_str)
+        except (ValueError, TypeError):
+            return None
+
+    parsed_date_assigned = parse_date(date_assigned)
+    parsed_date_due = parse_date(date_due)
 
     try:
         status_enum = TaskStatus(status)
@@ -387,8 +411,8 @@ def create_task():
     task = Task(
         title=title,
         description=description,
-        date_assigned=date_assigned,
-        date_due=date_due,
+        date_assigned=parsed_date_assigned,
+        date_due=parsed_date_due,
         status=status_enum,
         category=category_enum,
     )
@@ -398,9 +422,7 @@ def create_task():
     db.session.add(task)
     db.session.commit()
 
-
     return jsonify(task.to_json()), 201
-
 
 @app.route("/tasks/status", methods=["GET"])
 @jwt_required()

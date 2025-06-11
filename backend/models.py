@@ -81,7 +81,7 @@ class User(db.Model):
     tasks = db.relationship('Task', secondary=user_task, back_populates='users')
     goals = db.relationship('Goal', secondary=user_goal, back_populates='users')
     habits = db.relationship('Habit', secondary=user_habit, back_populates='users')
-    notes = db.relationship('Note', back_populates='user')  # Removed many-to-many reference
+    notes = db.relationship('Note', back_populates='user')  
 
     def to_json(self):
         return {
@@ -104,7 +104,7 @@ class Task(db.Model):
 
     users = db.relationship('User', secondary=user_task, back_populates='tasks')
 
-    status = db.Column(db.Enum(TaskStatus), nullable=False, default=TaskStatus.PENDING)
+    status = db.Column(db.Enum(TaskStatus), nullable=True)
     category = db.Column(db.Enum(TaskCategory), nullable=True)
 
     def to_json(self):

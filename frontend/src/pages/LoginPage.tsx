@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 import { loginUser } from '../lib/api';
 
@@ -18,9 +19,11 @@ const LoginPage = () => {
     try {
       const data = await loginUser({ email, password });
     
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Set cookies with a 7-day expiration
+      Cookies.set('access_token', data.access_token, { expires: 7 });
+      console.log('Access Token:', data.access_token);
+      Cookies.set('refresh_token', data.refresh_token, { expires: 7 });
+      Cookies.set('user', JSON.stringify(data.user), { expires: 7 });
 
       navigate('/');
     } catch (err) {
@@ -36,7 +39,6 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#d7e9f7] relative overflow-hidden">
-      {/* Cloud background */}
       <img
         src="./images/cloud.webp"
         alt="Cloud background"
