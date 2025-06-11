@@ -19,7 +19,7 @@ function App() {
     <div className="bg-blue-100">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<MatrixPage />}>
+          <Route path="/" element={<LanguageAndRegion />}>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/settings/notification-settings" element={<NotificationSettings />} />

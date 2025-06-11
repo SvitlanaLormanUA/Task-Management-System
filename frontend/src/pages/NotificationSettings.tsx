@@ -8,7 +8,7 @@ const NotificationSettings = () => {
     const [toTime, setToTime] = useState("20:00");
     return (
 
-        <div className="flex flex-row flex-grow bg-[#E1F0F9] text-gray-800">
+        <div className="flex flex-row flex-grow bg-[#E1F0F9] text-gray-800 h-screen">
             <aside className="w-64 bg-[#BBD7D9] p-4 flex flex-col justify-between">
 
                 <button
