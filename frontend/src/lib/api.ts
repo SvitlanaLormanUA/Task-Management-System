@@ -7,9 +7,16 @@ const apiStore = {
   get: async <T>(endpoint: string, params: Record<string, string | number> = {}): Promise<T> => {
     const url = new URL(`${API_URL}${endpoint}`);
     Object.keys(params).forEach(key => url.searchParams.append(key, params[key].toString()));
+
+    const token = Cookies.get('access_token');
+
+    const headers: HeadersInit = {
+  'Content-Type': 'application/json',
+  'Authorization': token ? `Bearer ${token}` : '',
+};
     const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: headers,
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -18,21 +25,25 @@ const apiStore = {
     return response.json() as Promise<T>;
   },
  post: async <T>(endpoint: string, data: unknown): Promise<T> => {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json'
-  };
-  
-  // Get token from cookies
-  const token = Cookies.get('access_token');
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
 
-  const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(data),
-  });
+const token = Cookies.get('access_token');
+
+  const accessToken = (typeof data === 'object' && data !== null && 'access_token' in data)
+    ? (data as { access_token?: string }).access_token
+    : undefined;
+  
+const headers: HeadersInit = {
+  'Content-Type': 'application/json',
+  'Authorization': accessToken || token ? `Bearer ${accessToken || token}` : '',
+};
+
+console.log('Headers:', headers);
+
+const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
+  method: 'POST',
+  headers,
+  body: JSON.stringify(data),
+});
 
   if (!response.ok) {
     const errorData: Error = await response.json();
@@ -106,7 +117,7 @@ export const signupUser = (data: { name: string; email: string; password: string
 export const getUserByEmail = (email: string) => apiStore.get<User>(`/users/${email}`, { email });
 
 // Task endpoints
-export const fetchTasks = (userId: number) => apiStore.get<Task[]>('/tasks', { user_id: userId });
+export const fetchTasks = () => apiStore.get<Task[]>('/tasks');
 export const fetchTaskById = (taskId: number) => apiStore.get<Task>(`/tasks/${taskId}`);
 export const fetchTasksByStatus = (status: TaskStatus) => apiStore.get<Task[]>('/tasks/status', { status });
 export const fetchTasksByCategory = (category: TaskCategory) => apiStore.get<Task[]>('/tasks/category', { category });

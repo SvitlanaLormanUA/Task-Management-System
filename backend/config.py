@@ -70,7 +70,6 @@ jwt = JWTManager(app)
 
 db = SQLAlchemy(app)
 
-
 def sync_db():
     conn = libsql.connect(local_db_path, sync_url=url, auth_token=auth_token)
 

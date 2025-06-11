@@ -1,6 +1,6 @@
 from enum import Enum
 from config import db
-
+from sqlalchemy import CheckConstraint
 # Багато-до-багатьох
 user_task = db.Table('user_task',
                      db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
@@ -104,21 +104,20 @@ class Task(db.Model):
 
     users = db.relationship('User', secondary=user_task, back_populates='tasks')
 
-    status = db.Column(db.Enum(TaskStatus), nullable=True)
-    category = db.Column(db.Enum(TaskCategory), nullable=True)
+    status = db.Column(db.String(20), CheckConstraint("status IN ('Pending', 'In Progress')"), nullable=True)
+    category = db.Column(db.String(20), CheckConstraint("category IN ('Work')"), nullable=True)
 
     def to_json(self):
         return {
             "id": self.id,
             "title": self.title,
             "description": self.description,
-            "dateAssigned": self.date_assigned,
-            "dateDue": self.date_due,
+            "dateAssigned": self.date_assigned.isoformat() if self.date_assigned else None,
+            "dateDue": self.date_due.isoformat() if self.date_due else None,
             "users": [user.id for user in self.users],
-            "status": self.status.value,
-            "category": self.category.value if self.category else None
+            "status": self.status,
+            "category": self.category
         }
-
 class Note(db.Model):
     __tablename__ = 'notes'
     id = db.Column(db.Integer, primary_key=True)

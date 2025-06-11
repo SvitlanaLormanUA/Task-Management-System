@@ -94,7 +94,7 @@ const CalendarPage = () => {
     setError('');
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   if (!taskData.title.trim()) {
@@ -104,28 +104,36 @@ const CalendarPage = () => {
 
   setLoading(true);
   setError('');
-  
-  try {
-    const data = await createTask({
-                title: taskData.title.trim(),
-                description: taskData.description.trim() || undefined,
-                dateAssigned: taskData.dateAssigned instanceof Date ? taskData.dateAssigned.toISOString() : taskData.dateAssigned,
-                dateDue: taskData.dateDue ? taskData.dateDue.toISOString() : undefined,
-                status: taskData.status,
-                category: taskData.category
-            });
 
+  try {
+    const accessToken = Cookies.get('access_token');
+    if (!accessToken) {
+      throw new Error('No access token found. Please log in.');
+    }
+
+    const taskPayload = {
+      title: taskData.title.trim(),
+      description: taskData.description.trim() || undefined,
+      dateAssigned: taskData.dateAssigned instanceof Date ? taskData.dateAssigned.toISOString() : new Date().toISOString(),
+      dateDue: taskData.dateDue ? taskData.dateDue.toISOString() : undefined,
+      status: taskData.status,
+      category: taskData.category,
+      access_token: accessToken,
+    };
+
+
+    const data = await createTask(taskPayload);
 
     setTaskData({
       title: '',
       description: '',
       dateAssigned: new Date(),
-        dateDue: undefined,
-      status: 'Pending', // Ensure this matches your backend constraint
+      dateDue: undefined,
+      status: 'Pending',
       category: 'Work',
-      userId: user?.id || 0
+      userId: user?.id || 0,
     });
-    
+
     if (data) {
       console.log('Task created successfully:', data);
       const tasksData = await fetchTasks(user?.id || 0);
@@ -133,13 +141,12 @@ const CalendarPage = () => {
     }
     setShowTaskForm(false);
   } catch (err) {
-    setError(err.response?.data?.error || 'Failed to create task. Please try again.');
-    console.error('Task creation error:', err);
+    console.error('Full error details:', err);
+    setError(err.response?.data?.error || err.message || 'Failed to create task. Please try again.');
   } finally {
     setLoading(false);
   }
 };
-
   return (
     <div className="flex bg-blue-100 min-h-screen">
       <Header className="absolute top-4 left-4 z-10 md:top-6 md:left-6" />

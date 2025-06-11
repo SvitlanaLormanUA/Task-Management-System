@@ -337,9 +337,9 @@ def update_note_by_id(note_id):
 
 # --------------------------------------------Task--------------------------------------------
 @app.route("/tasks", methods=["GET"])
-@jwt_required() 
+# @jwt_required() 
 def get_user_tasks():
-    user_id = get_jwt_identity()
+    user_id = 1
 
     if not user_id:
         return jsonify({"error": "User ID is required."}), 400
@@ -370,7 +370,7 @@ def create_task():
     except ValueError:
         return jsonify({"error": "Invalid User ID. User ID must be a number."}), 400
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return jsonify({"error": "User not found."}), 404
 
@@ -396,15 +396,19 @@ def create_task():
     parsed_date_assigned = parse_date(date_assigned)
     parsed_date_due = parse_date(date_due)
 
+    # Ensure status is valid and convert to string
     try:
         status_enum = TaskStatus(status)
+        status = status_enum.value  # e.g., 'Pending'
     except ValueError:
         return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in TaskStatus]}"}), 400
 
-    category_enum = None
+    # Ensure category is valid and convert to string
+    category = None
     if category:
         try:
             category_enum = TaskCategory(category)
+            category = category_enum.value  # e.g., 'Work'
         except ValueError:
             return jsonify({"error": f"Invalid category. Valid categories are: {[c.value for c in TaskCategory]}"}), 400
 
@@ -413,8 +417,8 @@ def create_task():
         description=description,
         date_assigned=parsed_date_assigned,
         date_due=parsed_date_due,
-        status=status_enum,
-        category=category_enum,
+        status=status,  # Використовуємо рядок
+        category=category,  # Використовуємо рядок
     )
 
     task.users.append(user)
@@ -423,7 +427,6 @@ def create_task():
     db.session.commit()
 
     return jsonify(task.to_json()), 201
-
 @app.route("/tasks/status", methods=["GET"])
 @jwt_required()
 def get_tasks_by_status():
