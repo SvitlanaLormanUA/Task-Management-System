@@ -57,7 +57,7 @@ const HabitTrackerPage = () => {
           <img src="./images/bunny.webp" alt="Character" className="w-full h-full object-cover" />
         </div>
         <button
-          onClick={() => window.history.back()}
+          onClick={() => window.location.href = '/'}
           className="flex items-center gap-2 text-gray-700 hover:text-black mb-4"
         >
           <span role="img" aria-label="back">←</span>
@@ -70,27 +70,29 @@ const HabitTrackerPage = () => {
         {/* Top menu using Square */}
         <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4">
           {[
-            { title: 'calendar', color: '#FAFAF5' },
-            { title: 'matrix', color: '#FBD443' },
-           // { title: 'quick notes', color: '#FEF9F5' },
-            { title: 'to-do lists', color: '#FFF7D8' },
-            { title: 'goals | beta', color: '#F3D9DA' },
+            { title: 'calendar', color: '#FAFAF5', path: '/calendar' },
+            { title: 'matrix', color: '#FBD443', path: '/matrix' },
+            // { title: 'quick notes', color: '#FEF9F5' },
+            { title: 'to-do lists', color: '#FFF7D8', path: '/todo-list' },
+            { title: 'goals | beta', color: '#F3D9DA', path: '/error' },
           ].map((tab) => (
             <Square
               key={tab.title}
               title={tab.title}
               color={tab.color || 'white'}
               className="w-36 h-24 p-4"
+              onClick={() => window.location.href = tab.path}
+
             />
           ))}
         </div>
 
-        {/* Date controls */}
-        <div className="flex justify-between items-center px-8">
-          <Button variant="ghost"><ChevronLeft /></Button>
-          <h2 className="text-xl font-semibold">6.01 - 12.01</h2>
-          <Button variant="ghost"><ChevronRight /></Button>
-        </div>
+        {/*/!* Date controls *!/*/}
+        {/*<div className="flex justify-between items-center px-8">*/}
+        {/*  <Button variant="ghost"><ChevronLeft /></Button>*/}
+        {/*  <h2 className="text-xl font-semibold">6.01 - 12.01</h2>*/}
+        {/*  <Button variant="ghost"><ChevronRight /></Button>*/}
+        {/*</div>*/}
 
         {/* Yoga Section */}
         <Card className="bg-blue-100 rounded-3xl mt-4 mb-6 ml-4 mr-4">
@@ -109,7 +111,7 @@ const HabitTrackerPage = () => {
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm">7 times a week</span>
+              <span className="text-sm">4 times a week</span>
               <Check className="text-green-700 w-4 h-4" />
             </div>
           </CardContent>

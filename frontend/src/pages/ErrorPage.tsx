@@ -9,7 +9,7 @@ const ErrorPage = () => {
             />
 
             {/* Назад стрілка */}
-            <div className="absolute top-4 left-4 z-10 text-2xl cursor-pointer">←</div>
+            <div className="absolute top-4 left-4 z-10 text-2xl cursor-pointer">  </div>
 
             {/* Заголовок */}
             <h1 className="text-4xl md:text-5xl font-bold text-[#4b306a] z-10 mt-8 mb-2 text-center">

@@ -50,7 +50,7 @@ const ToDoListPage = () => {
         </div>
 
         <button
-          onClick={() => window.history.back()}
+          onClick={() => window.location.href = '/'}
           className="flex items-center gap-2 text-gray-700 hover:text-black mb-4"
         >
           <span role="img" aria-label="back">←</span>
@@ -64,17 +64,18 @@ const ToDoListPage = () => {
 
         <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4">
           {[
-            { title: 'calendar', color: '#FAFAF5' },
-            { title: 'matrix', color: '#FBD443' },
-          //  { title: 'quick notes', color: '#FEF9F5' },
-            { title: 'habit-tracker', color: '#FFF7D8' },
-            { title: 'goals | beta', color: '#F3D9DA' },
+            { title: 'calendar', color: '#FAFAF5', path: '/calendar' },
+            { title: 'matrix', color: '#FBD443', path: '/matrix' },
+            //  { title: 'quick notes', color: '#FEF9F5' },
+            { title: 'habit-tracker', color: '#FFF7D8', path: '/habit-tracker' },
+            { title: 'goals | beta', color: '#F3D9DA', path: '/error' },
           ].map((tab) => (
             <Square
               key={tab.title}
               title={tab.title}
               color={tab.color || 'white'}
               className="w-36 h-24 p-4"
+              onClick={() => window.location.href = tab.path}
             />
           ))}
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
-import Header from "@/components/Header.tsx";
+import Header from '@/components/Header.tsx';
 import Square from '@/components/Square';
 import Calendar from '@/components/Calendar.tsx';
 import { createTask, getUserByEmail, fetchTasks } from '@/lib/api';
@@ -39,7 +39,7 @@ const CalendarPage = () => {
       if (userCookie) {
         try {
           let email: string | undefined;
-          
+
           if (userCookie.startsWith('{')) {
             const parsedUser: User = JSON.parse(userCookie);
             console.log('Parsed user:', parsedUser);
@@ -94,59 +94,59 @@ const CalendarPage = () => {
     setError('');
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  if (!taskData.title.trim()) {
-    setError('Title is required');
-    return;
-  }
-
-  setLoading(true);
-  setError('');
-
-  try {
-    const accessToken = Cookies.get('access_token');
-    if (!accessToken) {
-      throw new Error('No access token found. Please log in.');
+    if (!taskData.title.trim()) {
+      setError('Title is required');
+      return;
     }
 
-    const taskPayload = {
-      title: taskData.title.trim(),
-      description: taskData.description.trim() || undefined,
-      dateAssigned: taskData.dateAssigned instanceof Date ? taskData.dateAssigned.toISOString() : new Date().toISOString(),
-      dateDue: taskData.dateDue ? taskData.dateDue.toISOString() : undefined,
-      status: taskData.status,
-      category: taskData.category,
-      access_token: accessToken,
-    };
+    setLoading(true);
+    setError('');
+
+    try {
+      const accessToken = Cookies.get('access_token');
+      if (!accessToken) {
+        throw new Error('No access token found. Please log in.');
+      }
+
+      const taskPayload = {
+        title: taskData.title.trim(),
+        description: taskData.description.trim() || undefined,
+        dateAssigned: taskData.dateAssigned instanceof Date ? taskData.dateAssigned.toISOString() : new Date().toISOString(),
+        dateDue: taskData.dateDue ? taskData.dateDue.toISOString() : undefined,
+        status: taskData.status,
+        category: taskData.category,
+        access_token: accessToken,
+      };
 
 
-    const data = await createTask(taskPayload);
+      const data = await createTask(taskPayload);
 
-    setTaskData({
-      title: '',
-      description: '',
-      dateAssigned: new Date(),
-      dateDue: undefined,
-      status: 'Pending',
-      category: 'Work',
-      userId: user?.id || 0,
-    });
+      setTaskData({
+        title: '',
+        description: '',
+        dateAssigned: new Date(),
+        dateDue: undefined,
+        status: 'Pending',
+        category: 'Work',
+        userId: user?.id || 0,
+      });
 
-    if (data) {
-      console.log('Task created successfully:', data);
-      const tasksData = await fetchTasks(user?.id || 0);
-      setTasks(tasksData);
+      if (data) {
+        console.log('Task created successfully:', data);
+        const tasksData = await fetchTasks(user?.id || 0);
+        setTasks(tasksData);
+      }
+      setShowTaskForm(false);
+    } catch (err) {
+      console.error('Full error details:', err);
+      setError(err.response?.data?.error || err.message || 'Failed to create task. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setShowTaskForm(false);
-  } catch (err) {
-    console.error('Full error details:', err);
-    setError(err.response?.data?.error || err.message || 'Failed to create task. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   return (
     <div className="flex bg-blue-100 min-h-screen">
       <Header className="absolute top-4 left-4 z-10 md:top-6 md:left-6" />
@@ -169,7 +169,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
 
         <button
-          onClick={() => window.history.back()}
+          onClick={() => window.location.href = '/'}
           className="flex items-center gap-2 text-gray-700 hover:text-black mb-4"
         >
           <span role="img" aria-label="back">←</span>
@@ -177,25 +177,27 @@ const handleSubmit = async (e: React.FormEvent) => {
         </button>
       </aside>
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col">
-                {/* Top menu using Square */}
-                <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4">
-                    {[
-                        {title: "habit tracker", color: "#FAFAF5"},
-                        {title: "matrix", color: "#FBD443"},
-                        //  {title: "quick notes", color: "#FEF9F5"},
-                        {title: "to-do lists", color: "#FFF7D8"},
-                        {title: "goals | beta", color: "#F3D9DA"},
-                    ].map((tab) => (
-                        <Square
-                            key={tab.title}
-                            title={tab.title}
-                            color={tab.color || "white"}
-                            className="w-36 h-24 p-4"
-                        />
-                    ))}
-                </div>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Top menu using Square */}
+        <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4">
+          {[
+            { title: 'habit tracker', color: '#FAFAF5', path: '/habit-tracker' },
+            { title: 'matrix', color: '#FBD443', path: '/matrix' },
+            //  {title: "quick notes", color: "#FEF9F5"},
+            { title: 'to-do lists', color: '#FFF7D8', path: '/todo-list' },
+            { title: 'goals | beta', color: '#F3D9DA', path: '/error' },
+          ].map((tab) => (
+            <Square
+              key={tab.title}
+              title={tab.title}
+              color={tab.color || 'white'}
+              className="w-36 h-24 p-4"
+              onClick={() => window.location.href = tab.path}
+
+            />
+          ))}
+        </div>
 
         <div className="min-h-screen bg-blue-100 p-4">
           {/* Add Task Button */}
@@ -317,7 +319,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                           dateAssigned: '',
                           status: 'Pending',
                           category: 'Work',
-                          userId: user?.id || 0
+                          userId: user?.id || 0,
                         });
                       }}
                       className="text-[#5c3d82] py-2 px-4 rounded-full border border-[#5c3d82] hover:bg-[#5c3d82] hover:text-white transition"

@@ -19,7 +19,7 @@ const ProfilePage = () => {
         {/* Назад */}
         <div className="relative z-10 p-4">
           <button className="text-gray-600 hover:text-black text-lg font-medium mb-2">
-            ←
+
           </button>
           <h1 className="text-2xl font-bold text-gray-800 mb-6">Profile settings</h1>
         </div>

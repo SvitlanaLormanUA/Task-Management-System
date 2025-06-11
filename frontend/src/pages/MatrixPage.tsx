@@ -22,7 +22,7 @@ const MatrixPage = () => {
           <img src="./images/bunny.webp" alt="Character" className="w-full h-full object-cover" />
         </div>
         <button
-          onClick={() => window.history.back()}
+          onClick={() => window.location.href = '/'}
           className="flex items-center gap-2 text-gray-700 hover:text-black mb-4"
         >
           <span role="img" aria-label="back">←</span>
@@ -35,11 +35,11 @@ const MatrixPage = () => {
         {/* Top menu using Square */}
         <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4">
           {[
-            { title: 'calendar', color: '#FAFAF5' },
-            { title: 'to-do lists', color: '#FFF7D8' },
-            { title: 'habit tracker ', color: '#FEF9F5' },
+            { title: 'calendar', color: '#FAFAF5', path: '/calendar' },
+            { title: 'to-do lists', color: '#FFF7D8', path: '/todo-list' },
+            { title: 'habit tracker ', color: '#FEF9F5', path: '/habit-tracker' },
             // { title: 'quick notes | beta', color: '#FEF9F5' },
-            { title: 'goals | beta', color: '#F3D9DA' },
+            { title: 'goals | beta', color: '#F3D9DA', path: '/error' },
 
           ].map((tab) => (
             <Square
@@ -47,6 +47,8 @@ const MatrixPage = () => {
               title={tab.title}
               color={tab.color || 'white'}
               className="w-36 h-24 p-4"
+              onClick={() => window.location.href = tab.path}
+
             />
           ))}
         </div>
