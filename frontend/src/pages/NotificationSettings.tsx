@@ -27,20 +27,24 @@ const NotificationSettings = () => {
 
                 <div className="space-y-2">
                     <input
-                        type="text"
-                        placeholder="Search"
-                        className="w-full px-3 py-2 rounded-full text-sm bg-gray-200"
+                      type="text"
+                      placeholder="Search"
+                      className="w-full px-3 py-2 rounded-full text-sm bg-gray-200"
                     />
-                    <div className="text-sm text-gray-700 flex items-center gap-1">
+                    <a
+                      href="https://docs.google.com/document/d/1eOrF913VSX1qPp1aZ1DyNuyT0QKQm3Ib0wCnRA4NCqY/edit?usp=sharing"
+                      className="text-sm text-gray-700 flex items-center gap-1">
                         <span role="img" aria-label="help">❓</span> Help
-                    </div>
-                    <div className="text-sm text-gray-700 flex items-center gap-1">
+                    </a>
+                    <a
+                      href="https://docs.google.com/document/d/12EdSq63tLxQTf5c17knVabinvZOW5SqKYZLI-x0s3DQ/edit?usp=sharing"
+                      className="text-sm text-gray-700 flex items-center gap-1">
                         <span role="img" aria-label="about">🔗</span> About us
-                    </div>
+                    </a>
                 </div>
 
                 {/* Tree image */}
-                <img src="./images/preferences_tree.webp" alt="Tree decoration" className="w-full mt-4"/>
+                <img src="./images/preferences_tree.webp" alt="Tree decoration" className="w-full mt-4" />
             </aside>
 
             {/* Основна частина */}
@@ -48,7 +52,7 @@ const NotificationSettings = () => {
                 <h2 className="text-xl font-medium">Recive notifications :</h2>
                 <div className="space-y-2">
                     <label className="block">
-                        <input type="checkbox" defaultChecked className="mr-2"/>
+                        <input type="checkbox" defaultChecked className="mr-2" />
                         On Email
                     </label>
                     <label className="block">

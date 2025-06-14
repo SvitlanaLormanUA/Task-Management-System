@@ -28,9 +28,9 @@ const SettingsPage = () => (
                 <a href="https://docs.google.com/document/d/1eOrF913VSX1qPp1aZ1DyNuyT0QKQm3Ib0wCnRA4NCqY/edit?usp=sharing" className="text-sm text-gray-700 flex items-center gap-1" target="_blank">
                     <span role="img" aria-label="help">❓</span> Help
                 </a>
-                <div className="text-sm text-gray-700 flex items-center gap-1">
+                <a href="https://docs.google.com/document/d/12EdSq63tLxQTf5c17knVabinvZOW5SqKYZLI-x0s3DQ/edit?usp=sharing" className="text-sm text-gray-700 flex items-center gap-1">
                     <span role="img" aria-label="about">🔗</span> About us
-                </div>
+                </a>
             </div>
 
             {/* Tree image */}
