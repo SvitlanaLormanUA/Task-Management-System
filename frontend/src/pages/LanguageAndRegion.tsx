@@ -61,7 +61,7 @@ const LanguageAndRegion = () => {
                         <option>(GMT+0) UTC</option>
                         <option>(GMT+1) Central European Time</option>
                         <option>(GMT+2) Eastern European Time (Kyiv)</option>
-                        <option>(GMT+3) Moscow Standard Time</option>
+                        <option>(GMT+3) Kyiv Standard Time</option>
                         <option>(GMT+5:30) India Standard Time</option>
                         <option>(GMT+8) China Standard Time</option>
                         <option>(GMT-5) Eastern Time (US & Canada)</option>
