@@ -1,6 +1,4 @@
 
-export type TaskCategory = "Work" | "Home" | "Study" | "Other";
-
 export type TaskStatus = "Pending" | "In Progress" | "Completed" | "Canceled";
 
 export type HabitDays =
@@ -35,7 +33,7 @@ export interface Task {
   dateDue?: string; // ISO string
   users: number[];
   status: TaskStatus;
-  category?: TaskCategory;
+  category?: string;
 }
 
 export interface Note {
@@ -69,6 +67,6 @@ export type CalendarEvent = {
   endDate: Date;
   title: string;
   status: TaskStatus;
-  category?: TaskCategory;
+  category?: string;
   id: number;
 };

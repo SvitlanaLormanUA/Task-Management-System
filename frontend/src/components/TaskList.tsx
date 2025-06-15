@@ -48,10 +48,10 @@ export default function TasksList({ tasks, onDeleteTask, onUpdateTaskStatus, loa
               </select>
               <button
                 onClick={() => onDeleteTask(task.id)}
-                className='text-red-600 hover:text-red-800 text-sm'
+                className='text-red-600 hover:text-red-800 text-sm cursor-pointer'
                 disabled={loading}
               >
-                🗑️ Delete
+                🗑️
               </button>
             </div>
           </div>

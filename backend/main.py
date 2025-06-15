@@ -1,6 +1,6 @@
 from flask import request, jsonify, Response
 from config import app, db
-from models import User, Task, TaskCategory, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, \
+from models import User, Task, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, \
     HabitDays
 import bcrypt
 from flask_jwt_extended import (
@@ -408,7 +408,6 @@ def create_task():
     status = data.get("status", "Pending")
     category = data.get("category")
 
-    # Parse date strings into datetime objects
     def parse_date(date_str):
         if not date_str:
             return None
@@ -420,21 +419,11 @@ def create_task():
     parsed_date_assigned = parse_date(date_assigned)
     parsed_date_due = parse_date(date_due)
 
-    # Ensure status is valid and convert to string
     try:
         status_enum = TaskStatus(status)
         status = status_enum.value
     except ValueError:
         return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in TaskStatus]}"}), 400
-
-    # Ensure category is valid and convert to string
-    category = None
-    if category:
-        try:
-            category_enum = TaskCategory(category)
-            category = category_enum.value
-        except ValueError:
-            return jsonify({"error": f"Invalid category. Valid categories are: {[c.value for c in TaskCategory]}"}), 400
 
     task = Task(
         title=title,
@@ -478,12 +467,7 @@ def get_tasks_by_category():
     if not category:
         return jsonify({"error": "Category is required."}), 400
 
-    try:
-        category_enum = TaskCategory(category)
-    except ValueError:
-        return jsonify({"error": f"Invalid category. Valid categories are: {[c.value for c in TaskCategory]}"}), 400
-
-    tasks = Task.query.filter_by(category=category_enum).all()
+    tasks = Task.query.filter_by(category).all()
     return jsonify([task.to_json() for task in tasks]), 200
 
 
@@ -549,10 +533,10 @@ def update_task(task_id):
     category = data.get("category")
     if category:
         try:
-            category_enum = TaskCategory(category)
+           task.category = category
         except ValueError:
-            return jsonify({"error": f"Invalid category. Valid categories are: {[c.value for c in TaskCategory]}"}), 400
-        task.category = category_enum
+            return jsonify({"error": f"Invalid category"}), 400
+        
 
     db.session.commit()
 
