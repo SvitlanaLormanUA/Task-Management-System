@@ -6,84 +6,103 @@ from dotenv import load_dotenv
 import os
 import sqlite3
 from sqlalchemy.pool import StaticPool
-from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token,
-    get_jwt_identity
-)
+from flask_jwt_extended import JWTManager
 from datetime import timedelta
+import threading
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app, origins=[
     "http://localhost:3000",  # React dev server
-    "http://localhost:5173"
+    "http://localhost:5173"   # Vite dev server
 ])
 
-# Turso
+# Turso configuration
 url = os.getenv("DB_LINK")
 auth_token = os.getenv("DB_AUTH_TOKEN")
 local_db_path = "local.db"
 
-
 class LibSQLWrapper:
     def __init__(self):
-        self.conn = None
-        self.turso_conn = None
-        self._setup_connections()
-
-    def _setup_connections(self):
-        self.turso_conn = libsql.connect(
-            database=local_db_path,
-            sync_url=url,
-            auth_token=auth_token
-        )
-        self.turso_conn.sync()
-
-        self.conn = sqlite3.connect(
-            local_db_path,
+        self.local_db_path = local_db_path
+        self.sync_url = url
+        self.auth_token = auth_token
+        self._lock = threading.Lock()
+        self._setup_local_db()
+    
+    def _setup_local_db(self):
+        """Initialize local database and sync from Turso"""
+        try:
+            # Create connection to Turso for syncing
+            turso_conn = libsql.connect(
+                database=self.local_db_path,
+                sync_url=self.sync_url,
+                auth_token=self.auth_token
+            )
+            
+            # Initial sync to get latest data
+            turso_conn.sync()
+            turso_conn.close()
+            
+            print("Initial sync completed successfully")
+            
+        except Exception as e:
+            print(f"Setup error: {e}")
+            # Create local db if sync fails
+            conn = sqlite3.connect(self.local_db_path)
+            conn.close()
+    
+    def sync_to_turso(self):
+        """Sync local changes to Turso"""
+        with self._lock:
+            try:
+                turso_conn = libsql.connect(
+                    database=self.local_db_path,
+                    sync_url=self.sync_url,
+                    auth_token=self.auth_token
+                )
+                turso_conn.sync()
+                turso_conn.close()
+                print("Sync to Turso completed")
+                return True
+            except Exception as e:
+                print(f"Sync error: {e}")
+                return False
+    
+    def __call__(self):
+        """Return a new SQLite connection for SQLAlchemy"""
+        return sqlite3.connect(
+            self.local_db_path,
             check_same_thread=False,
             timeout=30
         )
 
-    def sync(self):
-        try:
-            self.turso_conn.sync()
-        except Exception as e:
-            print(f"Sync error: {e}")
-            # Reconnect if sync fails
-            self._setup_connections()
-            raise
+# Initialize the wrapper
+db_wrapper = LibSQLWrapper()
 
-    def __call__(self):
-        return self.conn
-
-
+# Flask configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{local_db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'creator': LibSQLWrapper(),
+    'creator': db_wrapper,
     'poolclass': StaticPool,
     'connect_args': {'check_same_thread': False}
 }
-app.config['JWT_SECRET_KEY'] = '103ewihbjfrje'  
+
+# JWT configuration
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', '103ewihbjfrje')  # Use env var
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=7)
-jwt = JWTManager(app)
 
+jwt = JWTManager(app)
 db = SQLAlchemy(app)
 
-def sync_db():
-    conn = libsql.connect(local_db_path, sync_url=url, auth_token=auth_token)
-
-    # Внесення змін у базу
-    conn.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER);")
-    conn.execute("INSERT INTO users(id) VALUES (1);")
-    conn.commit()
-
-    # Синхронізація з Turso
+def sync_after_commit():
+    """Call this after important database operations"""
     try:
-        conn.sync()
-        print("Database synced successfully with Turso")
+        db_wrapper.sync_to_turso()
     except Exception as e:
-        print(f"Sync failed: {e}")
+        print(f"Post-commit sync failed: {e}")
+
+# Example usage in your routes:

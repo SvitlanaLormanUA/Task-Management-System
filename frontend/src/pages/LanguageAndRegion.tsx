@@ -1,5 +1,5 @@
 import Sidebar from "@/components/Sidebar.tsx";
-import '@/components/LanguageAndRegion.css';
+import '@/styles/LanguageAndRegion.css';
 
 
 const LanguageAndRegion = () => {

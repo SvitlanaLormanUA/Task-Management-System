@@ -1,5 +1,5 @@
 from flask import request, jsonify, Response
-from config import app, db
+from config import app, db, sync_after_commit
 from models import User, Task, TaskStatus, Note, Goal, Habit, GoalStatus, GoalPeriod, HabitStatus, \
     HabitDays
 import bcrypt
@@ -12,7 +12,7 @@ from flask_jwt_extended import (
 )
 from datetime import timedelta
 from dateutil.parser import parse 
-
+from config import sync_after_commit
 # персоналізована сторінка?
 @app.route("/", methods=["GET"])
 @jwt_required() 
@@ -439,6 +439,7 @@ def create_task():
     db.session.add(task)
     db.session.commit()
 
+    sync_after_commit()
     return jsonify(task.to_json()), 201
 
 

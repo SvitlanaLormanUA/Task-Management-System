@@ -310,95 +310,102 @@ export default function Calendar({ tasks }: CalendarProps) {
   };
 
   const renderCells = () => {
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
-    const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const today = new Date();
 
-    const rows = [];
-    let day = startDate;
+  const rows = [];
+  let day = startDate;
 
-    while (day <= endDate) {
-      const weekStart = day;
-      const weekDays = [];
-      const weekEvents = new Set<number>();
+  while (day <= endDate) {
+    const weekStart = day;
+    const weekDays = [];
+    const weekEvents = new Set<number>();
 
-      // Render day cells
-      for (let i = 0; i < 7; i++) {
-        const cloneDay = day;
-        weekDays.push(
+    for (let i = 0; i < 7; i++) {
+      const cloneDay = day;
+      const isToday = isSameDay(day, today); 
+      weekDays.push(
+        <div
+          key={day.toString()}
+          className={`border h-24 p-1 cursor-pointer hover:bg-gray-50 relative ${
+            !isSameMonth(day, monthStart) ? 'bg-gray-100 text-gray-400' : 'bg-white'
+          }`}
+          onClick={() => {
+            setSelectedDate(cloneDay);
+            setStartDate(format(cloneDay, 'yyyy-MM-dd'));
+            setEndDate(format(addDays(cloneDay, 1), 'yyyy-MM-dd'));
+            setIsOpen(true);
+          }}
+        >
           <div
-            key={day.toString()}
-            className={`border h-24 p-1 cursor-pointer hover:bg-gray-50 relative ${
-              !isSameMonth(day, monthStart) ? 'bg-gray-100 text-gray-400' : 'bg-white'
+            className={`text-sm font-medium relative z-10 flex items-center justify-center w-6 h-6 ${
+              isToday ? 'p-4 rounded-full text-white bg-[#614D7C]' : ''
             }`}
-            onClick={() => {
-              setSelectedDate(cloneDay);
-              setStartDate(format(cloneDay, 'yyyy-MM-dd'));
-              setEndDate(format(addDays(cloneDay, 1), 'yyyy-MM-dd'));
-              setIsOpen(true);
-            }}
           >
-            <div className='text-sm font-medium relative z-10'>{format(day, 'd')}</div>
-          </div>,
-        );
-        day = addDays(day, 1);
-      }
-
-      const taskSpans = [];
-      let spanRow = 0;
-
-      events.forEach((event) => {
-        const span = getTaskSpanForDay(event, weekStart, weekStart);
-        if (span && !weekEvents.has(event.id)) {
-          weekEvents.add(event.id);
-          taskSpans.push(
-            <div
-              key={`${event.id}-${weekStart.toISOString()}`}
-              className={`absolute z-20 px-2 text-xs rounded shadow-sm truncate ${
-                event.status === 'Completed'
-                  ? 'bg-green-500 text-white'
-                  : event.status === 'In Progress'
-                    ? 'bg-blue-500 text-white'
-                    : event.status === 'Canceled'
-                      ? 'bg-gray-500 text-white'
-                      : 'bg-yellow-500 text-white'
-              }`}
-              style={{
-                left: `${
-                  (100 / 7) *
-                  differenceInDays(
-                    new Date(Math.max(event.startDate.getTime(), weekStart.getTime())),
-                    weekStart,
-                  )
-                }%`,
-                width: `${(100 / 7) * span.width}%`,
-                top: `${24 + spanRow * 20}px`,
-                height: '18px',
-                lineHeight: '18px',
-              }}
-              title={`${event.title} (${format(event.startDate, 'MMM d')} - ${format(
-                event.endDate,
-                'MMM d',
-              )})`}
-            >
-              {event.title}
-            </div>,
-          );
-          spanRow++;
-        }
-      });
-
-      rows.push(
-        <div key={weekStart.toString()} className='relative'>
-          <div className='grid grid-cols-7'>{weekDays}</div>
-          {taskSpans}
+            {format(day, 'd')}
+          </div>
         </div>,
       );
+      day = addDays(day, 1);
     }
 
-    return <div className='space-y-0'>{rows}</div>;
-  };
+    const taskSpans = [];
+    let spanRow = 0;
+
+    events.forEach((event) => {
+      const span = getTaskSpanForDay(event, weekStart, weekStart);
+      if (span && !weekEvents.has(event.id)) {
+        weekEvents.add(event.id);
+        taskSpans.push(
+          <div
+            key={`${event.id}-${weekStart.toISOString()}`}
+            className={`absolute z-20 px-2 text-xs rounded shadow-sm truncate mt-5 ${
+              event.status === 'Completed'
+                ? 'bg-green-500 text-white'
+                : event.status === 'In Progress'
+                  ? 'bg-blue-500 text-white'
+                  : event.status === 'Canceled'
+                    ? 'bg-gray-500 text-white'
+                    : 'bg-yellow-500 text-white'
+            }`}
+            style={{
+              left: `${
+                (100 / 7) *
+                differenceInDays(
+                  new Date(Math.max(event.startDate.getTime(), weekStart.getTime())),
+                  weekStart,
+                )
+              }%`,
+              width: `${(100 / 7) * span.width}%`,
+              top: `${24 + spanRow * 20}px`,
+              height: '18px',
+              lineHeight: '18px',
+            }}
+            title={`${event.title} (${format(event.startDate, 'MMM d')} - ${format(
+              event.endDate,
+              'MMM d',
+            )})`}
+          >
+            {event.title}
+          </div>,
+        );
+        spanRow++;
+      }
+    });
+
+    rows.push(
+      <div key={weekStart.toString()} className='relative'>
+        <div className='grid grid-cols-7'>{weekDays}</div>
+        {taskSpans}
+      </div>,
+    );
+  }
+
+  return <div className='space-y-0'>{rows}</div>;
+};
 
   const selectedDateEvents = selectedDate
     ? events.filter(

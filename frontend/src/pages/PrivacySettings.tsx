@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import Sidebar from "@/components/Sidebar.tsx";
-import '@/components/PrivacySettings.css';
+import '@/styles/PrivacySettings.css';
 
 
 const PrivacySettings = () => {

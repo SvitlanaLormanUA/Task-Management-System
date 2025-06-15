@@ -104,8 +104,8 @@ class Task(db.Model):
 
     users = db.relationship('User', secondary=user_task, back_populates='tasks')
 
-    status = db.Column(db.String(20), CheckConstraint("status IN ('Pending', 'In Progress')"), nullable=True)
-    category = db.Column(db.String(20), CheckConstraint("category IN ('Work')"), nullable=True)
+    status = db.Column(db.String(20), CheckConstraint("status IN ('Pending', 'In Progress', 'Completed', 'Canceled')"), nullable=True)
+    category = db.Column(db.String(20), nullable=True)
 
     def to_json(self):
         return {

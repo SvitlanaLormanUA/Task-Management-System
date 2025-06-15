@@ -1,5 +1,5 @@
 import Sidebar from "@/components/Sidebar.tsx";
-import '@/components/NotificationSettings.css';
+import '@/styles/NotificationSettings.css';
 import {useState} from 'react';
 
 
