@@ -123,6 +123,24 @@ def login():
     }), 200
 
 
+@app.route('/validate-token', methods=['GET'])
+@jwt_required()
+def validate_token():
+    try:
+        current_user = get_jwt_identity()
+        user = User.query.get(current_user)
+        
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+            
+        return jsonify({
+            "valid": True,
+            "user_id": current_user
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": "Invalid token"}), 401
+    
 @app.route("/users/<email>", methods=["GET"])
 def get_user_by_email(email):
     user = User.query.filter_by(email=email).first()
@@ -203,6 +221,7 @@ def refresh():
     )
     
     return jsonify({"access_token": new_access_token}), 200
+
 # --------------------------------------------Note--------------------------------------------
 @app.route("/notes", methods=["PATCH"])
 @jwt_required()
