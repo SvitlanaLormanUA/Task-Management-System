@@ -450,13 +450,8 @@ def get_tasks_by_status():
 
     if not status:
         return jsonify({"error": "Status is required."}), 400
+    tasks = Task.query.filter_by(status=status).all()
 
-    try:
-        status_enum = TaskStatus(status)
-    except ValueError:
-        return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in TaskStatus]}"}), 400
-
-    tasks = Task.query.filter_by(status=status_enum).all()
     return jsonify([task.to_json() for task in tasks]), 200
 
 
@@ -468,9 +463,8 @@ def get_tasks_by_category():
     if not category:
         return jsonify({"error": "Category is required."}), 400
 
-    tasks = Task.query.filter_by(category).all()
+    tasks = Task.query.filter_by(category=category).all()
     return jsonify([task.to_json() for task in tasks]), 200
-
 
 @app.route("/tasks/dateAssigned", methods=["GET"])
 @jwt_required()

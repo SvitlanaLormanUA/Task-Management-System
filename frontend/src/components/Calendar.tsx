@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   format,
   startOfMonth,
@@ -16,14 +16,26 @@ import { useApiClient } from '../api/useApiClient';
 import type { Task, TaskStatus, CalendarEvent } from '../lib/types';
 import TaskForm from './TaskForm';
 import TasksList from './TaskList';
+import { baseCategories } from '@/lib/common';
 
 type CalendarProps = {
-  tasks?: Task[];
+  selectedStatuses: string[];
+  selectedCategories: string[];
+  onCategoriesUpdate?: (categories: string[]) => void;
 };
 
 function isWithinInterval(date: Date, interval: { start: Date; end: Date }): boolean {
   return date >= interval.start && date <= interval.end;
 }
+
+const fetchTasks = async (apiClient: ReturnType<typeof useApiClient>): Promise<Task[]> => {
+  const response = await apiClient.get('http://127.0.0.1:5000/tasks');
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error || 'Failed to fetch tasks');
+  }
+  return response.json();
+};
 
 const createTask = async (
   apiClient: ReturnType<typeof useApiClient>,
@@ -36,63 +48,39 @@ const createTask = async (
     category?: string;
   },
 ): Promise<Task> => {
-  const response = await apiClient.post('http://127.0.0.1:5000/tasks', taskData);
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData?.error || 'Failed to create task');
-  }
-
-  return response.json();
-};
-
-const fetchTasks = async (apiClient: ReturnType<typeof useApiClient>): Promise<Task[]> => {
-  const response = await apiClient.get('http://127.0.0.1:5000/tasks');
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData?.error || 'Failed to fetch tasks');
-  }
-
-  return response.json();
+    const response = await apiClient.post('http://127.0.0.1:5000/tasks', taskData);
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error || 'Failed to create task');
+    }
+    return response.json();
 };
 
 const deleteTask = async (
   apiClient: ReturnType<typeof useApiClient>,
   taskId: number,
 ): Promise<void> => {
-  const response = await apiClient.delete(`http://127.0.0.1:5000/tasks/${taskId}`);
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData?.error || 'Failed to delete task');
-  }
+    const response = await apiClient.delete(`http://127.0.0.1:5000/tasks/${taskId}`);
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error || 'Failed to delete task');
+    }
 };
 
 const updateTask = async (
   apiClient: ReturnType<typeof useApiClient>,
   taskId: number,
-  taskData: Partial<{
-    title: string;
-    description: string;
-    dateAssigned: string;
-    dateDue: string;
-    status: TaskStatus;
-    category: string;
-  }>,
+  taskData: Partial<Task>,
 ): Promise<Task> => {
-  console.log('Sending update with status:', taskData.status, typeof taskData.status);
-  const response = await apiClient.put(`http://127.0.0.1:5000/tasks/${taskId}`, taskData);
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData?.error || 'Failed to update task');
-  }
-
-  return response.json();
+    const response = await apiClient.put(`http://127.0.0.1:5000/tasks/${taskId}`, taskData);
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error || 'Failed to update task');
+    }
+    return response.json();
 };
 
-export default function Calendar({ tasks }: CalendarProps) {
+export default function Calendar({ selectedStatuses, selectedCategories, onCategoriesUpdate }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -102,56 +90,43 @@ export default function Calendar({ tasks }: CalendarProps) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [allTasks, setAllTasks] = useState<Task[]>(tasks || []);
-  const [loading, setLoading] = useState(false);
+  const [allTasks, setAllTasks] = useState<Task[]>([]); 
+  const [loading, setLoading] = useState(false); 
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>(['Work', 'Home', 'Study', 'Other']);
+  const [categories, setCategories] = useState<string[]>(baseCategories);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
 
   const apiClient = useApiClient();
 
-  const loadTasksFromAPI = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const apiTasks = await fetchTasks(apiClient);
-      setAllTasks(apiTasks);
-
-      const taskCategories = apiTasks
-        .map((task) => task.category)
-        .filter((cat): cat is string => Boolean(cat))
-        .filter((cat, index, arr) => arr.indexOf(cat) === index);
-
-      const defaultCategories = ['Work', 'Home', 'Study', 'Other'];
-      const allCategories = Array.from(new Set([...defaultCategories, ...taskCategories]));
-
-      setCategories((prevCategories) => {
-        const prevSet = new Set(prevCategories);
-        const newSet = new Set(allCategories);
-
-        if (
-          prevSet.size !== newSet.size ||
-          [...prevSet].some((cat) => !newSet.has(cat)) ||
-          [...newSet].some((cat) => !prevSet.has(cat))
-        ) {
-          return allCategories;
-        }
-        return prevCategories;
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load tasks');
-      console.error('Error loading tasks:', err);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    const loadAllTasks = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const tasksFromServer = await fetchTasks(apiClient);
+        setAllTasks(tasksFromServer);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load tasks');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAllTasks();
   }, [apiClient]);
 
-  useEffect(() => {
-    loadTasksFromAPI();
-  }, [loadTasksFromAPI]);
+  const filteredTasks = useMemo(() => {
+    if (selectedStatuses.length === 0 || selectedCategories.length === 0) {
+      return [];
+    }
+    return allTasks.filter(task => {
+      const statusMatch = selectedStatuses.includes(task.status);
+      const categoryMatch = selectedCategories.includes(task.category || 'Other');
+      return statusMatch && categoryMatch;
+    });
+  }, [allTasks, selectedStatuses, selectedCategories]);
 
   useEffect(() => {
-    const newEvents: CalendarEvent[] = allTasks
+    const newEvents: CalendarEvent[] = filteredTasks
       .filter((task) => task.dateAssigned && task.dateDue)
       .map((task) => ({
         startDate: new Date(task.dateAssigned as string),
@@ -162,9 +137,18 @@ export default function Calendar({ tasks }: CalendarProps) {
         id: task.id,
       }))
       .filter((event) => !isNaN(event.startDate.getTime()) && !isNaN(event.endDate.getTime()));
-
     setEvents(newEvents);
-  }, [allTasks]);
+  }, [filteredTasks]);
+
+
+useEffect(() => {
+  const taskCategories = allTasks
+    .map((task) => task.category)
+    .filter((cat): cat is string => Boolean(cat));
+  const allDynamicCategories = Array.from(new Set([...baseCategories, ...taskCategories]));
+  setCategories(allDynamicCategories);
+  onCategoriesUpdate?.(allDynamicCategories); 
+}, [allTasks, onCategoriesUpdate]);
 
   const handleAddCategory = (newCategory: string) => {
     const trimmedCategory = newCategory.trim();
@@ -173,30 +157,32 @@ export default function Calendar({ tasks }: CalendarProps) {
     }
   };
 
-  const handleDeleteCategory = (categoryToDelete: string) => {
-    const baseCategories = ['Work', 'Home', 'Study', 'Other'];
+  const handleDeleteCategory = async (categoryToDelete: string) => {
     if (!baseCategories.includes(categoryToDelete)) {
-      setCategories((prev) => prev.filter((cat) => cat !== categoryToDelete));
-
-      setAllTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task.category === categoryToDelete ? { ...task, category: 'Other' } : task,
-        ),
-      );
-
-      if (category === categoryToDelete) {
-        setCategory('Other');
+      try {
+        setLoading(true);
+        setCategories((prev) => prev.filter((cat) => cat !== categoryToDelete));
+        setAllTasks((prevTasks) =>
+          prevTasks.map((task) =>
+            task.category === categoryToDelete ? { ...task, category: 'Other' } : task,
+          ),
+        );
+        if (category === categoryToDelete) {
+          setCategory('Other');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete category');
+      } finally {
+        setLoading(false);
       }
     }
   };
 
   const handleAddEvent = async () => {
     if (!selectedDate || !title.trim() || !startDate || !endDate) return;
-
     try {
       setLoading(true);
       setError(null);
-
       const taskData = {
         title: title.trim(),
         description: description.trim() || undefined,
@@ -207,31 +193,20 @@ export default function Calendar({ tasks }: CalendarProps) {
       };
 
       if (editingTaskId) {
-        // Update existing task
         const updatedTask = await updateTask(apiClient, editingTaskId, taskData);
         setAllTasks((prev) => prev.map((task) => (task.id === editingTaskId ? updatedTask : task)));
       } else {
-        // Create new task
         const newTask = await createTask(apiClient, taskData);
         setAllTasks((prev) => [...prev, newTask]);
       }
 
+      setIsOpen(false);
+      setEditingTaskId(null);
       setTitle('');
       setDescription('');
       setCategory('Other');
-      setStartDate('');
-      setEndDate('');
-      setEditingTaskId(null);
-      setIsOpen(false);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : editingTaskId
-            ? 'Failed to update task'
-            : 'Failed to create task',
-      );
-      console.error('Error processing task:', err);
+      setError(err instanceof Error ? err.message : 'Failed to process task');
     } finally {
       setLoading(false);
     }
@@ -253,7 +228,6 @@ export default function Calendar({ tasks }: CalendarProps) {
 
   const handleDeleteTask = async (taskId: number) => {
     if (!confirm('Are you sure you want to delete this task?')) return;
-
     try {
       setLoading(true);
       setError(null);
@@ -261,7 +235,6 @@ export default function Calendar({ tasks }: CalendarProps) {
       setAllTasks((prev) => prev.filter((task) => task.id !== taskId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete task');
-      console.error('Error deleting task:', err);
     } finally {
       setLoading(false);
     }
@@ -275,25 +248,25 @@ export default function Calendar({ tasks }: CalendarProps) {
       setAllTasks((prev) => prev.map((task) => (task.id === taskId ? updatedTask : task)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update task status');
-      console.error('Error updating task status:', err);
     } finally {
       setLoading(false);
     }
   };
+  
 
   const renderHeader = () => (
-    <div className='flex justify-between items-center mb-4'>
+    <div className="flex justify-between items-center mb-4">
       <button
         onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-        className='p-2 hover:bg-gray-100 rounded'
+        className="p-2 hover:bg-gray-100 rounded"
         disabled={loading}
       >
         ◄
       </button>
-      <h2 className='text-xl font-semibold'>{format(currentMonth, 'MMMM yyyy')}</h2>
+      <h2 className="text-xl font-semibold">{format(currentMonth, 'MMMM yyyy')}</h2>
       <button
         onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-        className='p-2 hover:bg-gray-100 rounded'
+        className="p-2 hover:bg-gray-100 rounded"
         disabled={loading}
       >
         ►
@@ -304,9 +277,9 @@ export default function Calendar({ tasks }: CalendarProps) {
   const renderDays = () => {
     const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
     return (
-      <div className='grid grid-cols-7 text-center font-medium mb-2'>
+      <div className="grid grid-cols-7 text-center font-medium mb-2">
         {days.map((day) => (
-          <div key={day} className='p-2 text-gray-600'>
+          <div key={day} className="p-2 text-gray-600">
             {day}
           </div>
         ))}
@@ -348,7 +321,6 @@ export default function Calendar({ tasks }: CalendarProps) {
     while (day <= endDate) {
       const weekStart = day;
       const weekDays = [];
-      const weekEvents = new Set<number>();
 
       for (let i = 0; i < 7; i++) {
         const cloneDay = day;
@@ -387,11 +359,10 @@ export default function Calendar({ tasks }: CalendarProps) {
 
       events.forEach((event) => {
         const span = getTaskSpanForDay(event, weekStart, weekStart);
-        if (span && !weekEvents.has(event.id)) {
-          weekEvents.add(event.id);
+        if (span) {
           taskSpans.push(
             <div
-              key={`${event.id}-${weekStart.toISOString()}`}
+              key={`${event.id}-${weekStart.toISOString()}-${spanRow}`}
               className={`absolute z-20 px-2 text-xs rounded shadow-sm truncate mt-5 cursor-pointer ${
                 event.status === 'Completed'
                   ? 'bg-green-500 text-white'
@@ -402,23 +373,14 @@ export default function Calendar({ tasks }: CalendarProps) {
                       : 'bg-yellow-500 text-white'
               }`}
               style={{
-                left: `${
-                  (100 / 7) *
-                  differenceInDays(
-                    new Date(Math.max(event.startDate.getTime(), weekStart.getTime())),
-                    weekStart,
-                  )
-                }%`,
+                left: `${(100 / 7) * differenceInDays(new Date(Math.max(event.startDate.getTime(), weekStart.getTime())), weekStart)}%`,
                 width: `${(100 / 7) * span.width}%`,
                 top: `${24 + spanRow * 20}px`,
                 height: '18px',
                 lineHeight: '18px',
               }}
-              title={`${event.title} (${format(event.startDate, 'MMM d')} - ${format(
-                event.endDate,
-                'MMM d',
-              )})`}
-              onClick={() => handleEditTask(event.id)}
+              title={`${event.title} (${format(event.startDate, 'MMM d')} - ${format(event.endDate, 'MMM d')})`}
+              onClick={(e) => { e.stopPropagation(); handleEditTask(event.id); }}
             >
               {event.title}
             </div>,
@@ -426,36 +388,29 @@ export default function Calendar({ tasks }: CalendarProps) {
           spanRow++;
         }
       });
-
       rows.push(
-        <div key={weekStart.toString()} className='relative'>
-          <div className='grid grid-cols-7'>{weekDays}</div>
+        <div key={weekStart.toString()} className="relative">
+          <div className="grid grid-cols-7">{weekDays}</div>
           {taskSpans}
         </div>,
       );
     }
-
-    return <div className='space-y-0'>{rows}</div>;
+    return <div className="space-y-0">{rows}</div>;
   };
-
-  const selectedDateEvents = selectedDate
-    ? events.filter(
-        (e) =>
-          isSameDay(e.startDate, selectedDate) ||
-          isSameDay(e.endDate, selectedDate) ||
-          isWithinInterval(selectedDate, { start: e.startDate, end: e.endDate }),
-      )
-    : [];
+  
+  // if (loading) {
+  //   return <div className="flex justify-center items-center h-screen">Loading tasks...</div>;
+  // }
 
   return (
-    <div className='max-w-6xl mx-auto mt-4 p-4'>
+    <div className="max-w-6xl mx-auto mt-4 p-4">
       {error && (
-        <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
-          <div className='text-red-700 text-sm'>{error}</div>
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="text-red-700 text-sm">{error}</div>
         </div>
       )}
 
-      <div className='border rounded-lg shadow bg-white p-4'>
+      <div className="border rounded-lg shadow bg-white p-4">
         {renderHeader()}
         {renderDays()}
         {renderCells()}
@@ -471,22 +426,30 @@ export default function Calendar({ tasks }: CalendarProps) {
           category={category}
           setCategory={setCategory}
           startDate={startDate}
-          setEndDate={setEndDate}
-          endDate={endDate}
           setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
           loading={loading}
           onAddEvent={handleAddEvent}
-          selectedDateEvents={selectedDateEvents}
           categories={categories}
           onAddCategory={handleAddCategory}
           onDeleteCategory={handleDeleteCategory}
           editingTaskId={editingTaskId}
           setEditingTaskId={setEditingTaskId}
+          selectedDateEvents={
+            selectedDate
+              ? events.filter(
+                  (event) =>
+                    event.startDate <= selectedDate &&
+                    event.endDate >= selectedDate
+                )
+              : []
+          }
         />
       </div>
 
       <TasksList
-        tasks={allTasks}
+        tasks={filteredTasks}
         onDeleteTask={handleDeleteTask}
         onUpdateTaskStatus={handleUpdateTaskStatus}
         onEditTask={handleEditTask}

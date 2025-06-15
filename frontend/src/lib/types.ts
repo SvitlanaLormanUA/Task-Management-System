@@ -1,5 +1,6 @@
 
 export type TaskStatus = "Pending" | "In Progress" | "Completed" | "Canceled";
+export const taskStatuses: TaskStatus[] = ['Pending', 'In Progress', 'Completed', 'Canceled'];
 
 export type HabitDays =
   | "Sunday"

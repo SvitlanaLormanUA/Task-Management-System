@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
-import type { Task, TaskStatus } from '../lib/types';
+import type { Task, TaskStatus } from '@/lib/types';
 import { Pencil, Trash2 } from 'lucide-react';
+import { taskStatuses } from '@/lib/common';
 
 type TasksListProps = {
   tasks: Task[];
@@ -9,8 +10,6 @@ type TasksListProps = {
   onEditTask: (taskId: number) => void;
   loading: boolean;
 };
-
-const taskStatuses: TaskStatus[] = ['Pending', 'In Progress', 'Completed', 'Canceled'];
 
 export default function TasksList({
   tasks,
