@@ -19,10 +19,11 @@ type TaskFormProps = {
   loading: boolean;
   onAddEvent: () => void;
   selectedDateEvents: CalendarEvent[];
-  onDeleteTask: (taskId: number) => void;
   categories: string[];
   onAddCategory: (category: string) => void;
   onDeleteCategory: (category: string) => void;
+  editingTaskId: number | null;
+  setEditingTaskId: (id: number | null) => void;
 };
 
 export default function TaskForm({
@@ -42,18 +43,21 @@ export default function TaskForm({
   loading,
   onAddEvent,
   selectedDateEvents,
-  onDeleteTask,
   categories,
   onAddCategory,
   onDeleteCategory,
+  editingTaskId,
+  setEditingTaskId,
 }: TaskFormProps) {
   if (!isOpen) return null;
+
+  const isEditing = !!editingTaskId;
 
   return (
     <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
       <div className='bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto'>
         <h3 className='text-lg font-medium mb-4'>
-          {selectedDate && format(selectedDate, 'PPP')}
+          {selectedDate && format(selectedDate, 'PPP')} {isEditing ? '(Editing Task)' : ''}
         </h3>
 
         {selectedDateEvents.length > 0 && (
@@ -80,13 +84,6 @@ export default function TaskForm({
                       {event.status} • {event.category}
                     </div>
                   </div>
-                  <button
-                    onClick={() => onDeleteTask(event.id)}
-                    className='text-red-600 hover:text-red-800 text-sm cursor-pointer'
-                    disabled={loading}
-                  >
-                    🗑️
-                  </button>
                 </div>
               ))}
             </div>
@@ -94,7 +91,9 @@ export default function TaskForm({
         )}
 
         <div>
-          <h4 className='text-sm font-medium mb-2'>Create New Task:</h4>
+          <h4 className='text-sm font-medium mb-2'>
+            {isEditing ? 'Edit Task' : 'Create New Task'}:
+          </h4>
 
           <input
             type='text'
@@ -150,8 +149,9 @@ export default function TaskForm({
                 setCategory('Other');
                 setStartDate('');
                 setEndDate('');
+                setEditingTaskId(null);
               }}
-              className='px-3 py-1 text-sm text-gray-500 hover:text-gray-700'
+              className='px-3 py-1 text-sm text-gray-500 hover:text-gray-700 cursor-pointer'
               disabled={loading}
             >
               Cancel
@@ -160,8 +160,15 @@ export default function TaskForm({
               onClick={onAddEvent}
               disabled={!title.trim() || !startDate || !endDate || loading}
               className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 text-sm rounded transition disabled:opacity-50 disabled:cursor-not-allowed'
+              style={isEditing ? { cursor: 'pointer' } : undefined}
             >
-              {loading ? '⏳ Creating...' : 'Create Task'}
+              {loading
+                ? isEditing
+                  ? 'Updating...'
+                  : 'Creating...'
+                : isEditing
+                  ? 'Update Task'
+                  : 'Create Task'}
             </button>
           </div>
         </div>

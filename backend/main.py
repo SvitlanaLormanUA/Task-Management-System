@@ -496,6 +496,7 @@ def get_tasks_by_date_due():
     return jsonify([task.to_json() for task in tasks]), 200
 
 
+
 @app.route("/tasks/<int:task_id>", methods=["PUT"])
 @jwt_required()
 def update_task(task_id):
@@ -515,34 +516,41 @@ def update_task(task_id):
 
     date_assigned = data.get("dateAssigned")
     if date_assigned:
-        task.date_assigned = date_assigned
+        try:
+            task.date_assigned = parse(date_assigned) if isinstance(date_assigned, str) else date_assigned
+        except ValueError:
+            return jsonify({"error": "Invalid dateAssigned format"}), 400
 
     date_due = data.get("dateDue")
     if date_due:
-        task.date_due = date_due
+        try:
+            task.date_due = parse(date_due) if isinstance(date_due, str) else date_due
+        except ValueError:
+            return jsonify({"error": "Invalid dateDue format"}), 400
 
     if 'status' in data:
-            try:
-                status = data['status']
-                # If using TaskStatus enum
-                if not isinstance(status, str) or status not in [s.value for s in TaskStatus]:
-                    return jsonify({"error": "Invalid status value"}), 400
-                task.status = status
-            except ValueError:
+        try:
+            status = data['status']
+            if not isinstance(status, str) or status not in [s.value for s in TaskStatus]:
                 return jsonify({"error": "Invalid status value"}), 400
+            task.status = status
+        except ValueError:
+            return jsonify({"error": "Invalid status value"}), 400
         
     category = data.get("category")
     if category:
         try:
-           task.category = category
+            task.category = category
         except ValueError:
-            return jsonify({"error": f"Invalid category"}), 400
-        
+            return jsonify({"error": "Invalid category"}), 400
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Failed to update task: {str(e)}"}), 500
 
     return jsonify(task.to_json()), 200
-
 
 @app.route("/tasks/<int:task_id>", methods=["GET"])
 @jwt_required()

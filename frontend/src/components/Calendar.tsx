@@ -106,7 +106,8 @@ export default function Calendar({ tasks }: CalendarProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>(['Work', 'Home', 'Study', 'Other']);
-  
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+
   const apiClient = useApiClient();
 
   const loadTasksFromAPI = useCallback(async () => {
@@ -115,22 +116,24 @@ export default function Calendar({ tasks }: CalendarProps) {
       setError(null);
       const apiTasks = await fetchTasks(apiClient);
       setAllTasks(apiTasks);
- 
+
       const taskCategories = apiTasks
-        .map(task => task.category)
+        .map((task) => task.category)
         .filter((cat): cat is string => Boolean(cat))
         .filter((cat, index, arr) => arr.indexOf(cat) === index);
-      
+
       const defaultCategories = ['Work', 'Home', 'Study', 'Other'];
       const allCategories = Array.from(new Set([...defaultCategories, ...taskCategories]));
-      
-      setCategories(prevCategories => {
+
+      setCategories((prevCategories) => {
         const prevSet = new Set(prevCategories);
         const newSet = new Set(allCategories);
-        
-        if (prevSet.size !== newSet.size || 
-            [...prevSet].some(cat => !newSet.has(cat)) ||
-            [...newSet].some(cat => !prevSet.has(cat))) {
+
+        if (
+          prevSet.size !== newSet.size ||
+          [...prevSet].some((cat) => !newSet.has(cat)) ||
+          [...newSet].some((cat) => !prevSet.has(cat))
+        ) {
           return allCategories;
         }
         return prevCategories;
@@ -163,29 +166,24 @@ export default function Calendar({ tasks }: CalendarProps) {
     setEvents(newEvents);
   }, [allTasks]);
 
-  // New handlers for category management
   const handleAddCategory = (newCategory: string) => {
     const trimmedCategory = newCategory.trim();
     if (trimmedCategory && !categories.includes(trimmedCategory)) {
-      setCategories(prev => [...prev, trimmedCategory]);
+      setCategories((prev) => [...prev, trimmedCategory]);
     }
   };
 
   const handleDeleteCategory = (categoryToDelete: string) => {
     const baseCategories = ['Work', 'Home', 'Study', 'Other'];
     if (!baseCategories.includes(categoryToDelete)) {
-      setCategories(prev => prev.filter(cat => cat !== categoryToDelete));
-      
-      // Update tasks that use this category to 'Other'
-      setAllTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.category === categoryToDelete 
-            ? { ...task, category: 'Other' }
-            : task
-        )
+      setCategories((prev) => prev.filter((cat) => cat !== categoryToDelete));
+
+      setAllTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.category === categoryToDelete ? { ...task, category: 'Other' } : task,
+        ),
       );
-      
-      // If the current selected category is being deleted, reset to 'Work'
+
       if (category === categoryToDelete) {
         setCategory('Other');
       }
@@ -199,7 +197,7 @@ export default function Calendar({ tasks }: CalendarProps) {
       setLoading(true);
       setError(null);
 
-      const newTaskData = {
+      const taskData = {
         title: title.trim(),
         description: description.trim() || undefined,
         dateAssigned: new Date(startDate).toISOString(),
@@ -208,20 +206,48 @@ export default function Calendar({ tasks }: CalendarProps) {
         category: category,
       };
 
-      const newTask = await createTask(apiClient, newTaskData);
-      setAllTasks((prev) => [...prev, newTask]);
+      if (editingTaskId) {
+        // Update existing task
+        const updatedTask = await updateTask(apiClient, editingTaskId, taskData);
+        setAllTasks((prev) => prev.map((task) => (task.id === editingTaskId ? updatedTask : task)));
+      } else {
+        // Create new task
+        const newTask = await createTask(apiClient, taskData);
+        setAllTasks((prev) => [...prev, newTask]);
+      }
 
       setTitle('');
       setDescription('');
       setCategory('Other');
       setStartDate('');
       setEndDate('');
+      setEditingTaskId(null);
       setIsOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create task');
-      console.error('Error creating task:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : editingTaskId
+            ? 'Failed to update task'
+            : 'Failed to create task',
+      );
+      console.error('Error processing task:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditTask = (taskId: number) => {
+    const task = allTasks.find((t) => t.id === taskId);
+    if (task) {
+      setEditingTaskId(taskId);
+      setTitle(task.title);
+      setDescription(task.description || '');
+      setCategory(task.category || 'Other');
+      setStartDate(task.dateAssigned ? format(new Date(task.dateAssigned), 'yyyy-MM-dd') : '');
+      setEndDate(task.dateDue ? format(new Date(task.dateDue), 'yyyy-MM-dd') : '');
+      setSelectedDate(task.dateAssigned ? new Date(task.dateAssigned) : null);
+      setIsOpen(true);
     }
   };
 
@@ -310,102 +336,107 @@ export default function Calendar({ tasks }: CalendarProps) {
   };
 
   const renderCells = () => {
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
-  const today = new Date();
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    const today = new Date();
 
-  const rows = [];
-  let day = startDate;
+    const rows = [];
+    let day = startDate;
 
-  while (day <= endDate) {
-    const weekStart = day;
-    const weekDays = [];
-    const weekEvents = new Set<number>();
+    while (day <= endDate) {
+      const weekStart = day;
+      const weekDays = [];
+      const weekEvents = new Set<number>();
 
-    for (let i = 0; i < 7; i++) {
-      const cloneDay = day;
-      const isToday = isSameDay(day, today); 
-      weekDays.push(
-        <div
-          key={day.toString()}
-          className={`border h-24 p-1 cursor-pointer hover:bg-gray-50 relative ${
-            !isSameMonth(day, monthStart) ? 'bg-gray-100 text-gray-400' : 'bg-white'
-          }`}
-          onClick={() => {
-            setSelectedDate(cloneDay);
-            setStartDate(format(cloneDay, 'yyyy-MM-dd'));
-            setEndDate(format(addDays(cloneDay, 1), 'yyyy-MM-dd'));
-            setIsOpen(true);
-          }}
-        >
+      for (let i = 0; i < 7; i++) {
+        const cloneDay = day;
+        const isToday = isSameDay(day, today);
+        weekDays.push(
           <div
-            className={`text-sm font-medium relative z-10 flex items-center justify-center w-6 h-6 ${
-              isToday ? 'p-4 rounded-full text-white bg-[#614D7C]' : ''
+            key={day.toString()}
+            className={`border h-24 p-1 cursor-pointer hover:bg-gray-50 relative ${
+              !isSameMonth(day, monthStart) ? 'bg-gray-100 text-gray-400' : 'bg-white'
             }`}
-          >
-            {format(day, 'd')}
-          </div>
-        </div>,
-      );
-      day = addDays(day, 1);
-    }
-
-    const taskSpans = [];
-    let spanRow = 0;
-
-    events.forEach((event) => {
-      const span = getTaskSpanForDay(event, weekStart, weekStart);
-      if (span && !weekEvents.has(event.id)) {
-        weekEvents.add(event.id);
-        taskSpans.push(
-          <div
-            key={`${event.id}-${weekStart.toISOString()}`}
-            className={`absolute z-20 px-2 text-xs rounded shadow-sm truncate mt-5 ${
-              event.status === 'Completed'
-                ? 'bg-green-500 text-white'
-                : event.status === 'In Progress'
-                  ? 'bg-blue-500 text-white'
-                  : event.status === 'Canceled'
-                    ? 'bg-gray-500 text-white'
-                    : 'bg-yellow-500 text-white'
-            }`}
-            style={{
-              left: `${
-                (100 / 7) *
-                differenceInDays(
-                  new Date(Math.max(event.startDate.getTime(), weekStart.getTime())),
-                  weekStart,
-                )
-              }%`,
-              width: `${(100 / 7) * span.width}%`,
-              top: `${24 + spanRow * 20}px`,
-              height: '18px',
-              lineHeight: '18px',
+            onClick={() => {
+              setSelectedDate(cloneDay);
+              setStartDate(format(cloneDay, 'yyyy-MM-dd'));
+              setEndDate(format(addDays(cloneDay, 1), 'yyyy-MM-dd'));
+              setEditingTaskId(null);
+              setTitle('');
+              setDescription('');
+              setCategory('Other');
+              setIsOpen(true);
             }}
-            title={`${event.title} (${format(event.startDate, 'MMM d')} - ${format(
-              event.endDate,
-              'MMM d',
-            )})`}
           >
-            {event.title}
+            <div
+              className={`text-sm font-medium relative z-10 flex items-center justify-center w-6 h-6 ${
+                isToday ? 'p-4 rounded-full text-white bg-[#614D7C]' : ''
+              }`}
+            >
+              {format(day, 'd')}
+            </div>
           </div>,
         );
-        spanRow++;
+        day = addDays(day, 1);
       }
-    });
 
-    rows.push(
-      <div key={weekStart.toString()} className='relative'>
-        <div className='grid grid-cols-7'>{weekDays}</div>
-        {taskSpans}
-      </div>,
-    );
-  }
+      const taskSpans = [];
+      let spanRow = 0;
 
-  return <div className='space-y-0'>{rows}</div>;
-};
+      events.forEach((event) => {
+        const span = getTaskSpanForDay(event, weekStart, weekStart);
+        if (span && !weekEvents.has(event.id)) {
+          weekEvents.add(event.id);
+          taskSpans.push(
+            <div
+              key={`${event.id}-${weekStart.toISOString()}`}
+              className={`absolute z-20 px-2 text-xs rounded shadow-sm truncate mt-5 cursor-pointer ${
+                event.status === 'Completed'
+                  ? 'bg-green-500 text-white'
+                  : event.status === 'In Progress'
+                    ? 'bg-blue-500 text-white'
+                    : event.status === 'Canceled'
+                      ? 'bg-gray-500 text-white'
+                      : 'bg-yellow-500 text-white'
+              }`}
+              style={{
+                left: `${
+                  (100 / 7) *
+                  differenceInDays(
+                    new Date(Math.max(event.startDate.getTime(), weekStart.getTime())),
+                    weekStart,
+                  )
+                }%`,
+                width: `${(100 / 7) * span.width}%`,
+                top: `${24 + spanRow * 20}px`,
+                height: '18px',
+                lineHeight: '18px',
+              }}
+              title={`${event.title} (${format(event.startDate, 'MMM d')} - ${format(
+                event.endDate,
+                'MMM d',
+              )})`}
+              onClick={() => handleEditTask(event.id)}
+            >
+              {event.title}
+            </div>,
+          );
+          spanRow++;
+        }
+      });
+
+      rows.push(
+        <div key={weekStart.toString()} className='relative'>
+          <div className='grid grid-cols-7'>{weekDays}</div>
+          {taskSpans}
+        </div>,
+      );
+    }
+
+    return <div className='space-y-0'>{rows}</div>;
+  };
 
   const selectedDateEvents = selectedDate
     ? events.filter(
@@ -418,10 +449,9 @@ export default function Calendar({ tasks }: CalendarProps) {
 
   return (
     <div className='max-w-6xl mx-auto mt-4 p-4'>
-      {/* Error Display */}
       {error && (
         <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
-          <div className='text-red-700 text-sm'>❌ {error}</div>
+          <div className='text-red-700 text-sm'>{error}</div>
         </div>
       )}
 
@@ -441,16 +471,17 @@ export default function Calendar({ tasks }: CalendarProps) {
           category={category}
           setCategory={setCategory}
           startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
           setEndDate={setEndDate}
+          endDate={endDate}
+          setStartDate={setStartDate}
           loading={loading}
           onAddEvent={handleAddEvent}
           selectedDateEvents={selectedDateEvents}
-          onDeleteTask={handleDeleteTask}
           categories={categories}
           onAddCategory={handleAddCategory}
           onDeleteCategory={handleDeleteCategory}
+          editingTaskId={editingTaskId}
+          setEditingTaskId={setEditingTaskId}
         />
       </div>
 
@@ -458,6 +489,7 @@ export default function Calendar({ tasks }: CalendarProps) {
         tasks={allTasks}
         onDeleteTask={handleDeleteTask}
         onUpdateTaskStatus={handleUpdateTaskStatus}
+        onEditTask={handleEditTask}
         loading={loading}
       />
     </div>
