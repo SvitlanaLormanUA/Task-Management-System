@@ -42,8 +42,8 @@ export interface Note {
   id: number;
   title: string;
   content?: string;
-  dateCreated?: string; // ISO string
-  dateUpdated?: string; // ISO string
+  dateCreated?: string; 
+  dateUpdated?: string;
   userId: number;
 }
 
@@ -64,3 +64,11 @@ export interface Goal {
   status: GoalStatus;
   goalPeriod: GoalPeriod;
 }
+export type CalendarEvent = {
+  startDate: Date;
+  endDate: Date;
+  title: string;
+  status: TaskStatus;
+  category?: TaskCategory;
+  id: number;
+};

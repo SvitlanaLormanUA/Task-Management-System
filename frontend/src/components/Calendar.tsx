@@ -1,400 +1,404 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-    format,
-    startOfMonth,
-    endOfMonth,
-    startOfWeek,
-    endOfWeek,
-    addDays,
-    addMonths,
-    subMonths,
-    isSameMonth,
-    isSameDay,
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  addMonths,
+  subMonths,
+  isSameMonth,
+  isSameDay,
+  differenceInDays,
 } from 'date-fns';
-
-// Mock types for demo
-type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Canceled';
-type TaskCategory = 'Work' | 'Home' | 'Study' | 'Other';
-
-type Task = {
-    id: number;
-    title: string;
-    description?: string;
-    dateAssigned: string;
-    dateDue?: string | null;
-    status: TaskStatus;
-    category: TaskCategory;
-    userId: number;
-};
-
-type CalendarEvent = {
-    date: Date;
-    title: string;
-    status: TaskStatus;
-    category?: TaskCategory;
-};
-
-// Mock tasks with different date formats to test
-const mockTasks: Task[] = [
-    {
-        id: 1,
-        title: "Підготувати презентацію",
-        description: "Створити презентацію для зустрічі",
-        dateAssigned: "2025-06-10T10:00:00Z",
-        dateDue: "2025-06-15T23:59:59Z",
-        status: "Pending",
-        category: "Work",
-        userId: 1
-    },
-    {
-        id: 2,
-        title: "Купити продукти",
-        dateAssigned: "2025-06-10T10:00:00Z",
-        dateDue: "2025-06-12T18:00:00Z",
-        status: "In Progress",
-        category: "Home",
-        userId: 1
-    },
-    {
-        id: 3,
-        title: "Вивчити React",
-        dateAssigned: "2025-06-08T10:00:00Z",
-        dateDue: "2025-06-20T23:59:59Z",
-        status: "In Progress",
-        category: "Study",
-        userId: 1
-    },
-    {
-        id: 4,
-        title: "Завершене завдання",
-        dateAssigned: "2025-06-05T10:00:00Z",
-        dateDue: "2025-06-10T23:59:59Z",
-        status: "Completed",
-        category: "Work",
-        userId: 1
-    },
-    {
-        id: 5,
-        title: "Завдання без дати",
-        dateAssigned: "2025-06-08T10:00:00Z",
-        dateDue: null,
-        status: "Pending",
-        category: "Other",
-        userId: 1
-    }
-];
+import { useApiClient } from '../api/useApiClient';
+import type { Task, TaskStatus, TaskCategory, CalendarEvent } from '../lib/types';
+import TaskForm from './TaskForm';
+import TasksList from './TaskList';
 
 type CalendarProps = {
-    tasks: Task[];
+  tasks?: Task[];
 };
 
-export default function Calendar({ tasks = mockTasks }: CalendarProps) {
-    const [currentMonth, setCurrentMonth] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [isOpen, setIsOpen] = useState(false);
-    const [title, setTitle] = useState('');
-    const [events, setEvents] = useState<CalendarEvent[]>([]);
-    const [debugInfo, setDebugInfo] = useState<string[]>([]);
+function isWithinInterval(date: Date, interval: { start: Date; end: Date }): boolean {
+  return date >= interval.start && date <= interval.end;
+}
 
-    useEffect(() => {
-        const debug: string[] = [];
-        debug.push(`🔍 Calendar received ${tasks.length} tasks`);
-        
-        // Детальна діагностика кожного завдання
-        tasks.forEach((task, index) => {
-            debug.push(`\n📋 Task ${index + 1}:`);
-            debug.push(`  - ID: ${task.id}`);
-            debug.push(`  - Title: "${task.title}"`);
-            debug.push(`  - DateDue: ${task.dateDue || 'null'}`);
-            debug.push(`  - Status: ${task.status}`);
-            debug.push(`  - Category: ${task.category}`);
-            
-            if (!task.dateDue) {
-                debug.push(`  ❌ Skipped: No dateDue`);
-                return;
-            }
-            
-            const dueDate = new Date(task.dateDue);
-            const isValidDate = !isNaN(dueDate.getTime());
-            
-            debug.push(`  - Parsed date: ${dueDate.toString()}`);
-            debug.push(`  - Is valid: ${isValidDate ? '✅' : '❌'}`);
-            
-            if (isValidDate) {
-                debug.push(`  - Formatted: ${format(dueDate, 'yyyy-MM-dd HH:mm')}`);
-            }
-        });
-        
-        // Ensure tasks is always an array
-        const safeTasks = Array.isArray(tasks) ? tasks : [];
-        debug.push(`\n📊 Safe tasks array length: ${safeTasks.length}`);
-        
-        const newEvents: CalendarEvent[] = safeTasks
-            .filter(task => {
-                // Check if task has a valid dateDue
-                if (!task.dateDue) {
-                    debug.push(`⚠️ Task "${task.title}" has no dateDue`);
-                    return false;
-                }
-                
-                const dueDate = new Date(task.dateDue);
-                const isValidDate = !isNaN(dueDate.getTime());
-                
-                if (!isValidDate) {
-                    debug.push(`❌ Task "${task.title}" has invalid dateDue: ${task.dateDue}`);
-                    return false;
-                }
-                
-                debug.push(`✅ Task "${task.title}" will be added to calendar`);
-                return true;
-            })
-            .map(task => {
-                const event: CalendarEvent = {
-                    date: new Date(task.dateDue as string),
-                    title: task.title,
-                    status: task.status || 'Pending',
-                    category: task.category || 'Other',
-                };
-                return event;
-            });
-            
-        debug.push(`\n🎯 Final events count: ${newEvents.length}`);
-        setDebugInfo(debug);
-        setEvents(newEvents);
-    }, [tasks]);
+const createTask = async (
+  apiClient: ReturnType<typeof useApiClient>,
+  taskData: {
+    title: string;
+    description?: string;
+    dateAssigned?: string;
+    dateDue?: string;
+    status?: TaskStatus;
+    category?: TaskCategory;
+  },
+): Promise<Task> => {
+  const response = await apiClient.post('http://127.0.0.1:5000/tasks', taskData);
 
-    const renderHeader = () => (
-        <div className="flex justify-between items-center mb-4">
-            <button 
-                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="p-2 hover:bg-gray-100 rounded"
-            >
-                ◄
-            </button>
-            <h2 className="text-xl font-semibold">{format(currentMonth, 'MMMM yyyy')}</h2>
-            <button 
-                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="p-2 hover:bg-gray-100 rounded"
-            >
-                ►
-            </button>
-        </div>
-    );
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error || 'Failed to create task');
+  }
 
-    const renderDays = () => {
-        const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-        return (
-            <div className="grid grid-cols-7 text-center font-medium mb-2">
-                {days.map(day => (
-                    <div key={day} className="p-2 text-gray-600">{day}</div>
-                ))}
-            </div>
-        );
-    };
+  return response.json();
+};
 
-    const renderCells = () => {
-        const monthStart = startOfMonth(currentMonth);
-        const monthEnd = endOfMonth(monthStart);
-        const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
-        const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+const fetchTasks = async (apiClient: ReturnType<typeof useApiClient>): Promise<Task[]> => {
+  const response = await apiClient.get('http://127.0.0.1:5000/tasks');
 
-        const rows = [];
-        let days = [];
-        let day = startDate;
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error || 'Failed to fetch tasks');
+  }
 
-        while (day <= endDate) {
-            for (let i = 0; i < 7; i++) {
-                const cloneDay = day;
-                const dayEvents = events.filter(e => isSameDay(e.date, cloneDay));
+  return response.json();
+};
 
-                days.push(
-                    <div
-                        key={day.toString()}
-                        className={`border h-24 p-1 cursor-pointer hover:bg-gray-50 ${
-                            !isSameMonth(day, monthStart) ? 'bg-gray-100 text-gray-400' : 'bg-white'
-                        }`}
-                        onClick={() => {
-                            setSelectedDate(cloneDay);
-                            setIsOpen(true);
-                        }}
-                    >
-                        <div className="text-sm font-medium">{format(day, 'd')}</div>
-                        <div className="mt-1 space-y-1">
-                            {dayEvents.slice(0, 2).map((e, i) => (
-                                <div 
-                                    key={i} 
-                                    className={`text-xs px-1 py-0.5 rounded truncate ${
-                                        e.status === 'Completed' ? 'bg-green-200 text-green-800' :
-                                        e.status === 'In Progress' ? 'bg-blue-200 text-blue-800' :
-                                        e.status === 'Canceled' ? 'bg-gray-200 text-gray-800' :
-                                        'bg-yellow-200 text-yellow-800'
-                                    }`}
-                                    title={e.title}
-                                >
-                                    {e.title}
-                                </div>
-                            ))}
-                            {dayEvents.length > 2 && (
-                                <div className="text-xs text-gray-500">
-                                    +{dayEvents.length - 2} more
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-                day = addDays(day, 1);
-            }
-            rows.push(<div key={day.toString()} className="grid grid-cols-7">{days}</div>);
-            days = [];
-        }
+const deleteTask = async (
+  apiClient: ReturnType<typeof useApiClient>,
+  taskId: number,
+): Promise<void> => {
+  const response = await apiClient.delete(`http://127.0.0.1:5000/tasks/${taskId}`);
 
-        return <div>{rows}</div>;
-    };
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error || 'Failed to delete task');
+  }
+};
 
-    const handleAddEvent = () => {
-        if (selectedDate && title.trim()) {
-            setEvents([...events, { 
-                date: selectedDate, 
-                title,
-                status: 'Pending' as TaskStatus,
-                category: 'Work' as TaskCategory
-            }]);
-            setTitle('');
-            setIsOpen(false);
-        }
-    };
+const updateTask = async (
+  apiClient: ReturnType<typeof useApiClient>,
+  taskId: number,
+  taskData: Partial<{
+    title: string;
+    description: string;
+    dateAssigned: string;
+    dateDue: string;
+    status: TaskStatus;
+    category: TaskCategory;
+  }>,
+): Promise<Task> => {
+  console.log('Sending update with status:', taskData.status, typeof taskData.status);
+  const response = await apiClient.put(`http://127.0.0.1:5000/tasks/${taskId}`, taskData);
 
-    const selectedDateEvents = selectedDate ? 
-        events.filter(e => isSameDay(e.date, selectedDate)) : [];
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error || 'Failed to update task');
+  }
 
+  return response.json();
+};
+
+export default function Calendar({ tasks }: CalendarProps) {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState<TaskCategory>('Work');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>(tasks || []);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const apiClient = useApiClient();
+
+  const loadTasksFromAPI = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const apiTasks = await fetchTasks(apiClient);
+      setAllTasks(apiTasks);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load tasks');
+      console.error('Error loading tasks:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [apiClient]);
+
+  useEffect(() => {
+    loadTasksFromAPI();
+  }, [tasks, loadTasksFromAPI]);
+
+  useEffect(() => {
+    const newEvents: CalendarEvent[] = allTasks
+      .filter((task) => task.dateAssigned && task.dateDue)
+      .map((task) => ({
+        startDate: new Date(task.dateAssigned as string),
+        endDate: new Date(task.dateDue as string),
+        title: task.title,
+        status: task.status,
+        category: task.category || 'Other',
+        id: task.id,
+      }))
+      .filter((event) => !isNaN(event.startDate.getTime()) && !isNaN(event.endDate.getTime()));
+
+    setEvents(newEvents);
+  }, [allTasks]);
+
+  const handleAddEvent = async () => {
+    if (!selectedDate || !title.trim() || !startDate || !endDate) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const newTaskData = {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        dateAssigned: new Date(startDate).toISOString(),
+        dateDue: new Date(endDate).toISOString(),
+        status: 'Pending' as TaskStatus,
+        category: category,
+      };
+
+      const newTask = await createTask(apiClient, newTaskData);
+      setAllTasks((prev) => [...prev, newTask]);
+
+      setTitle('');
+      setDescription('');
+      setCategory('Work');
+      setStartDate(''); // Reset to empty
+      setEndDate(''); // Reset to empty
+      setIsOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create task');
+      console.error('Error creating task:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: number) => {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      await deleteTask(apiClient, taskId);
+      setAllTasks((prev) => prev.filter((task) => task.id !== taskId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete task');
+      console.error('Error deleting task:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateTaskStatus = async (taskId: number, status: TaskStatus) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const updatedTask = await updateTask(apiClient, taskId, { status });
+      setAllTasks((prev) => prev.map((task) => (task.id === taskId ? updatedTask : task)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update task status');
+      console.error('Error updating task status:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderHeader = () => (
+    <div className='flex justify-between items-center mb-4'>
+      <button
+        onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+        className='p-2 hover:bg-gray-100 rounded'
+        disabled={loading}
+      >
+        ◄
+      </button>
+      <h2 className='text-xl font-semibold'>{format(currentMonth, 'MMMM yyyy')}</h2>
+      <button
+        onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+        className='p-2 hover:bg-gray-100 rounded'
+        disabled={loading}
+      >
+        ►
+      </button>
+    </div>
+  );
+
+  const renderDays = () => {
+    const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
     return (
-        <div className="max-w-6xl mx-auto mt-4 p-4">
-            {/* Для нас */}
-            {/* <div className="mb-6 p-4 bg-gray-50 border rounded-lg">
-                <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-lg font-semibold text-gray-700">🔧 Debug Information</h3>
-                    <div className="text-sm bg-blue-100 px-3 py-1 rounded-full">
-                        Events: {events.length} | Tasks: {tasks.length}
-                    </div>
-                </div>
-                <div className="max-h-40 overflow-y-auto bg-white p-3 rounded border font-mono text-xs">
-                    {debugInfo.map((line, index) => (
-                        <div key={index} className={line.includes('❌') ? 'text-red-600' : 
-                                                   line.includes('✅') ? 'text-green-600' :
-                                                   line.includes('⚠️') ? 'text-yellow-600' :
-                                                   line.includes('🎯') ? 'text-blue-600 font-bold' :
-                                                   'text-gray-700'}>
-                            {line}
-                        </div>
-                    ))}
-                </div>
-            </div> */}
-
-            {/* Calendar */}
-            <div className="border rounded-lg shadow bg-white p-4">
-                <div className="mb-4 flex justify-between items-center">
-                    <div className="text-sm text-gray-600">
-                        Displaying {events.length} task(s) on calendar
-                    </div>
-                    <div className="text-xs text-gray-500">
-                        Current month: {format(currentMonth, 'MMMM yyyy')}
-                    </div>
-                </div>
-                
-                {renderHeader()}
-                {renderDays()}
-                {renderCells()}
-
-                {/* Quick Add Event Modal */}
-                {isOpen && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-                            <h3 className="text-lg font-medium mb-4">
-                                {selectedDate && format(selectedDate, 'PPP')}
-                            </h3>
-                            
-                            {selectedDateEvents.length > 0 && (
-                                <div className="mb-4">
-                                    <h4 className="text-sm font-medium mb-2">Existing Tasks:</h4>
-                                    <div className="space-y-2">
-                                        {selectedDateEvents.map((event, i) => (
-                                            <div 
-                                                key={i}
-                                                className={`p-2 rounded text-sm ${
-                                                    event.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                                                    event.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
-                                                    event.status === 'Canceled' ? 'bg-gray-100 text-gray-800' :
-                                                    'bg-yellow-100 text-yellow-800'
-                                                }`}
-                                            >
-                                                <div className="font-medium">{event.title}</div>
-                                                <div className="text-xs">
-                                                    {event.status} • {event.category}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            
-                            <div>
-                                <h4 className="text-sm font-medium mb-2">Add Quick Event:</h4>
-                                <input
-                                    type="text"
-                                    value={title}
-                                    onChange={e => setTitle(e.target.value)}
-                                    placeholder="Event name"
-                                    className="w-full border px-3 py-2 mb-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <div className="flex justify-end space-x-2">
-                                    <button 
-                                        onClick={() => {
-                                            setIsOpen(false);
-                                            setTitle('');
-                                        }} 
-                                        className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleAddEvent}
-                                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 text-sm rounded transition"
-                                    >
-                                        Add
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Tasks List for Reference */}
-            <div className="mt-6 p-4 bg-white border rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">📋 All Tasks (for reference)</h3>
-                <div className="space-y-2">
-                    {tasks.map((task, index) => (
-                        <div key={task.id || index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                            <div>
-                                <div className="font-medium">{task.title}</div>
-                                <div className="text-xs text-gray-500">
-                                    Due: {task.dateDue ? format(new Date(task.dateDue), 'PPP') : 'No due date'} | 
-                                    Status: {task.status} | 
-                                    Category: {task.category}
-                                </div>
-                            </div>
-                            <div className={`px-2 py-1 rounded text-xs ${
-                                task.status === 'Completed' ? 'bg-green-200 text-green-800' :
-                                task.status === 'In Progress' ? 'bg-blue-200 text-blue-800' :
-                                task.status === 'Canceled' ? 'bg-gray-200 text-gray-800' :
-                                'bg-yellow-200 text-yellow-800'
-                            }`}>
-                                {task.status}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
+      <div className='grid grid-cols-7 text-center font-medium mb-2'>
+        {days.map((day) => (
+          <div key={day} className='p-2 text-gray-600'>
+            {day}
+          </div>
+        ))}
+      </div>
     );
+  };
+
+  const getTaskSpanForDay = (event: CalendarEvent, day: Date, weekStart: Date) => {
+    if (!isWithinInterval(day, { start: event.startDate, end: event.endDate })) {
+      return null;
+    }
+
+    const dayOfWeek = differenceInDays(day, weekStart);
+    const taskStartInWeek = Math.max(0, differenceInDays(event.startDate, weekStart));
+    const taskEndInWeek = Math.min(6, differenceInDays(event.endDate, weekStart));
+
+    if (dayOfWeek !== taskStartInWeek) {
+      return null;
+    }
+
+    const spanWidth = taskEndInWeek - taskStartInWeek + 1;
+
+    return {
+      width: spanWidth,
+      event,
+    };
+  };
+
+  const renderCells = () => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+    const rows = [];
+    let day = startDate;
+
+    while (day <= endDate) {
+      const weekStart = day;
+      const weekDays = [];
+      const weekEvents = new Set<number>();
+
+      // Render day cells
+      for (let i = 0; i < 7; i++) {
+        const cloneDay = day;
+        weekDays.push(
+          <div
+            key={day.toString()}
+            className={`border h-24 p-1 cursor-pointer hover:bg-gray-50 relative ${
+              !isSameMonth(day, monthStart) ? 'bg-gray-100 text-gray-400' : 'bg-white'
+            }`}
+            onClick={() => {
+              setSelectedDate(cloneDay);
+              setStartDate(format(cloneDay, 'yyyy-MM-dd')); // Start date is the clicked date
+              setEndDate(format(addDays(cloneDay, 1), 'yyyy-MM-dd')); // End date is the next day
+              setIsOpen(true);
+            }}
+          >
+            <div className='text-sm font-medium relative z-10'>{format(day, 'd')}</div>
+          </div>,
+        );
+        day = addDays(day, 1);
+      }
+
+      const taskSpans = [];
+      let spanRow = 0;
+
+      events.forEach((event) => {
+        const span = getTaskSpanForDay(event, weekStart, weekStart);
+        if (span && !weekEvents.has(event.id)) {
+          weekEvents.add(event.id);
+          taskSpans.push(
+            <div
+              key={`${event.id}-${weekStart.toISOString()}`}
+              className={`absolute z-20 px-2 text-xs rounded shadow-sm truncate ${
+                event.status === 'Completed'
+                  ? 'bg-green-500 text-white'
+                  : event.status === 'In Progress'
+                    ? 'bg-blue-500 text-white'
+                    : event.status === 'Canceled'
+                      ? 'bg-gray-500 text-white'
+                      : 'bg-yellow-500 text-white'
+              }`}
+              style={{
+                left: `${
+                  (100 / 7) *
+                  differenceInDays(
+                    new Date(Math.max(event.startDate.getTime(), weekStart.getTime())),
+                    weekStart,
+                  )
+                }%`,
+                width: `${(100 / 7) * span.width}%`,
+                top: `${24 + spanRow * 20}px`,
+                height: '18px',
+                lineHeight: '18px',
+              }}
+              title={`${event.title} (${format(event.startDate, 'MMM d')} - ${format(
+                event.endDate,
+                'MMM d',
+              )})`}
+            >
+              {event.title}
+            </div>,
+          );
+          spanRow++;
+        }
+      });
+
+      rows.push(
+        <div key={weekStart.toString()} className='relative'>
+          <div className='grid grid-cols-7'>{weekDays}</div>
+          {taskSpans}
+        </div>,
+      );
+    }
+
+    return <div className='space-y-0'>{rows}</div>;
+  };
+
+  const selectedDateEvents = selectedDate
+    ? events.filter(
+        (e) =>
+          isSameDay(e.startDate, selectedDate) ||
+          isSameDay(e.endDate, selectedDate) ||
+          isWithinInterval(selectedDate, { start: e.startDate, end: e.endDate }),
+      )
+    : [];
+
+  return (
+    <div className='max-w-6xl mx-auto mt-4 p-4'>
+      {/* Error Display */}
+      {error && (
+        <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
+          <div className='text-red-700 text-sm'>❌ {error}</div>
+        </div>
+      )}
+
+      <div className='border rounded-lg shadow bg-white p-4'>
+        {renderHeader()}
+        {renderDays()}
+        {renderCells()}
+
+        <TaskForm
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          selectedDate={selectedDate}
+          title={title}
+          setTitle={setTitle}
+          description={description}
+          setDescription={setDescription}
+          category={category}
+          setCategory={setCategory}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          loading={loading}
+          onAddEvent={handleAddEvent}
+          selectedDateEvents={selectedDateEvents}
+          onDeleteTask={handleDeleteTask}
+        />
+      </div>
+
+      <TasksList
+        tasks={allTasks}
+        onDeleteTask={handleDeleteTask}
+        onUpdateTaskStatus={handleUpdateTaskStatus}
+        loading={loading}
+      />
+    </div>
+  );
 }

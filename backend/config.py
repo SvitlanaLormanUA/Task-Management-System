@@ -15,7 +15,10 @@ from datetime import timedelta
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=[
+    "http://localhost:3000",  # React dev server
+    "http://localhost:5173"
+])
 
 # Turso
 url = os.getenv("DB_LINK")

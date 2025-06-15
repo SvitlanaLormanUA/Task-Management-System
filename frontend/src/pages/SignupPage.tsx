@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signupUser } from '@/lib/api';
+import { useApiClient } from '@/api/useApiClient';
 import Cookies from 'js-cookie';
+
+ 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -13,7 +15,7 @@ const SignupPage = () => {
   const [success, setSuccess] = useState(false);
   const [userExists, setUserExists] = useState(false);
   const navigate = useNavigate();
-
+  const apiClient = useApiClient();
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -44,30 +46,35 @@ const SignupPage = () => {
     setLoading(true);
     setError('');
 
+
     try {
-      const data = await signupUser({
+      const response = await apiClient.post('http://127.0.0.1:5000/signup', { 
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
-      });
+       }); 
 
+      if (!response.ok) {
+        throw new Error('Invalid email or password');
+      }
+
+      const data = await response.json();
+    
       Cookies.set('access_token', data.access_token, { expires: 7 });
       Cookies.set('refresh_token', data.refresh_token, { expires: 7 });
-      Cookies.set('user', JSON.stringify(formData.email.trim().toLowerCase()), { expires: 7 });
+      Cookies.set('user', JSON.stringify(data.user), { expires: 7 });
 
-        localStorage.setItem('access_token', data.access_token);
-    localStorage.setItem('refresh_token', data.refresh_token);
-    
       setSuccess(true);
 
       setTimeout(() => navigate('/'), 2000);
     } catch (err) {
-      if (err.response?.data?.error === 'User already exists' || err.response?.status === 409 || err.message === 'USER_EXISTS') {
+      const error = err as any;
+      if (error.response?.data?.error === 'User already exists' || error.response?.status === 409 || error.message === 'USER_EXISTS') {
         setError('User already exists. Want to login?');
         setUserExists(true);
         setTimeout(() => navigate('/login'), 3000);
       } else {
-        setError(err.response?.data?.error || 'User already exists. Want to login?');
+        setError(error.response?.data?.error || 'User already exists. Want to login?');
       }
       console.error('Signup error:', err);
     } finally {

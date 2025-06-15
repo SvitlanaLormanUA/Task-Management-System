@@ -64,7 +64,7 @@ def create_user():
 
         # Create tokens for the new user
         access_token = create_access_token(identity=str(user.id))
-        refresh_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))  # Fixed: use create_refresh_token
 
         try:
             wrapper = app.config['SQLALCHEMY_ENGINE_OPTIONS']['creator']
@@ -73,7 +73,6 @@ def create_user():
             print(f"Sync failed but user created locally: {e}")
 
         db.session.refresh(user)
-        wrapper.sync()
         
         return jsonify({
             "access_token": access_token,
@@ -106,22 +105,21 @@ def login():
 
     access_token = create_access_token(
         identity=str(user.id),
-        expires_delta=timedelta(minutes=15)  
+        expires_delta=timedelta(minutes=30)  
     )
 
     refresh_token = create_refresh_token(
         identity=str(user.id),
-        expires_delta=timedelta(days=7)  # Довгоживучий токен
+        expires_delta=timedelta(days=7)
     )
 
-    # Зберігаємо refresh token в базі (для можливості логауту)
+    # Store refresh token in database (for logout functionality)
     user.refresh_token = refresh_token
     db.session.commit()
-
     return jsonify({
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "user": user.to_json()  # Без пароля!
+        "user": user.to_json()
     }), 200
 
 
@@ -132,10 +130,15 @@ def get_user_by_email(email):
         return jsonify({"error": "User not found."}), 404
     return jsonify(user.to_json()), 200
 
-@app.route("/users/<int:task_id>", methods=["PUT"])
+@app.route("/users/<int:user_id>", methods=["PUT"])  
 @jwt_required()
-def update_user(task_id):
-    user_id = get_jwt_identity()
+def update_user(user_id):
+    current_user_id = get_jwt_identity()
+    
+    # Security check: users can only update their own profile
+    if str(current_user_id) != str(user_id):
+        return jsonify({"error": "Unauthorized"}), 403
+    
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found."}), 404
@@ -148,11 +151,16 @@ def update_user(task_id):
 
     email = data.get("email")
     if email:
+        # Check if email is already taken by another user
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user and existing_user.id != user.id:
+            return jsonify({"error": "Email already exists"}), 409
         user.email = email
 
     password = data.get("password")
     if password:
-        user.password = password
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        user.password = hashed_password.decode('utf-8')
 
     phone_number = data.get("phoneNumber")
     if phone_number:
@@ -181,18 +189,18 @@ def logout():
     return jsonify({"message": "Successfully logged out"}), 200
 
 @app.route('/refresh', methods=['POST'])
-@jwt_required()
+@jwt_required(refresh=True)  
 def refresh():
     current_user = get_jwt_identity()
     
     user = User.query.get(current_user)
-    if not user or user.refresh_token != get_jwt()['jti']:
-        return jsonify({"error": "Invalid refresh token"}), 401
+    if not user:
+        return jsonify({"error": "User not found"}), 404
     
-    # Генеруємо новий access token
     new_access_token = create_access_token(
-        identity=current_user,
-        expires_delta=timedelta(minutes=15))
+        identity=str(current_user),
+        expires_delta=timedelta(minutes=30)
+    )
     
     return jsonify({"access_token": new_access_token}), 200
 # --------------------------------------------Note--------------------------------------------
@@ -234,7 +242,7 @@ def update_note():
 @app.route("/notes", methods=["GET"])
 @jwt_required()
 def get_user_notes():
-    user_id = request.args.get("user_id")
+    user_id = get_jwt_identity()  # Fixed: get from JWT instead of query params
 
     if not user_id:
         return jsonify({"error": "User ID is required."}), 400
@@ -265,7 +273,7 @@ def get_note(note_id):
 def create_note():
     data = request.json
 
-    user_id = data.get("user_id")
+    user_id = get_jwt_identity()  # Fixed: get from JWT instead of request data
     if not user_id:
         return jsonify({"error": "User ID is required to create a note."}), 400
 
@@ -277,7 +285,7 @@ def create_note():
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found."}), 404
-    date = data.get("date")
+        
     title = data.get("title")
     content = data.get("content")
     date_created = data.get("dateCreated")
@@ -290,7 +298,7 @@ def create_note():
         date_updated=date_updated,
     )
 
-    note.users.append(note)
+    user.notes.append(note)  
 
     db.session.add(note)
     db.session.commit()
@@ -304,8 +312,6 @@ def delete_note(note_id):
     if not note:
         return jsonify({"error": "Note not found."}), 404
 
-    for user in note.users:
-        user.notes.remove(note)
     db.session.delete(note)
     db.session.commit()
     return jsonify({"message": "Note deleted successfully."}), 200
@@ -334,12 +340,11 @@ def update_note_by_id(note_id):
     db.session.commit()
 
     return jsonify(note.to_json()), 200
-
 # --------------------------------------------Task--------------------------------------------
 @app.route("/tasks", methods=["GET"])
-# @jwt_required() 
+@jwt_required() 
 def get_user_tasks():
-    user_id = 1
+    user_id = get_jwt_identity()
 
     if not user_id:
         return jsonify({"error": "User ID is required."}), 400
@@ -399,7 +404,7 @@ def create_task():
     # Ensure status is valid and convert to string
     try:
         status_enum = TaskStatus(status)
-        status = status_enum.value  # e.g., 'Pending'
+        status = status_enum.value
     except ValueError:
         return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in TaskStatus]}"}), 400
 
@@ -408,7 +413,7 @@ def create_task():
     if category:
         try:
             category_enum = TaskCategory(category)
-            category = category_enum.value  # e.g., 'Work'
+            category = category_enum.value
         except ValueError:
             return jsonify({"error": f"Invalid category. Valid categories are: {[c.value for c in TaskCategory]}"}), 400
 
@@ -417,8 +422,8 @@ def create_task():
         description=description,
         date_assigned=parsed_date_assigned,
         date_due=parsed_date_due,
-        status=status,  # Використовуємо рядок
-        category=category,  # Використовуємо рядок
+        status=status,
+        category=category,
     )
 
     task.users.append(user)
@@ -427,12 +432,13 @@ def create_task():
     db.session.commit()
 
     return jsonify(task.to_json()), 201
+
+
 @app.route("/tasks/status", methods=["GET"])
 @jwt_required()
 def get_tasks_by_status():
     status = request.args.get("status")
 
-    # for debugging purposes
     if not status:
         return jsonify({"error": "Status is required."}), 400
 
@@ -511,14 +517,16 @@ def update_task(task_id):
     if date_due:
         task.date_due = date_due
 
-    status = data.get("status")
-    if status:
-        try:
-            status_enum = TaskStatus(status)
-        except ValueError:
-            return jsonify({"error": f"Invalid status. Valid statuses are: {[s.value for s in TaskStatus]}"}), 400
-        task.status = status_enum
-
+    if 'status' in data:
+            try:
+                status = data['status']
+                # If using TaskStatus enum
+                if not isinstance(status, str) or status not in [s.value for s in TaskStatus]:
+                    return jsonify({"error": "Invalid status value"}), 400
+                task.status = status
+            except ValueError:
+                return jsonify({"error": "Invalid status value"}), 400
+        
     category = data.get("category")
     if category:
         try:
@@ -542,7 +550,7 @@ def get_task(task_id):
     return jsonify(task.to_json()), 200
 
 
-@app.route("/tasks/<int:task_id>/users", methods=["GET"])
+@app.route("/tasks/<int:task_id>/users", methods=["POST"])  
 @jwt_required()
 def assign_user_to_task(task_id):
     task = Task.query.get(task_id)
@@ -563,8 +571,9 @@ def assign_user_to_task(task_id):
     if not user:
         return jsonify({"error": "User not found."}), 404
 
-    task.users.append(user)
-    db.session.commit()
+    if user not in task.users:
+        task.users.append(user)
+        db.session.commit()
 
     return jsonify(task.to_json()), 200
 
@@ -576,23 +585,12 @@ def delete_task(task_id):
     if not task:
         return jsonify({"error": "Task not found."}), 404
 
-    for user in task.users:
-        user.tasks.remove(task)  # про всяк випадок?
-
     db.session.delete(task)
     db.session.commit()
 
     return jsonify({"message": "Task deleted successfully."}), 200
 
 
-@app.route("/tasks/<int:task_id>", methods=["GET"])
-@jwt_required()
-def get_task_by_id(task_id):
-    task = Task.query.get(task_id)
-    if not task:
-        return jsonify({"error": "Task not found."}), 404
-
-    return jsonify(task.to_json()), 200
 # --------------------------------------------Goal--------------------------------------------
 @app.route("/goals", methods=["POST"])
 @jwt_required()
@@ -615,7 +613,7 @@ def create_goal():
 
     title = data.get("title")
     if not title:
-        return jsonify({"error": "Please provide a title for the task."}), 400
+        return jsonify({"error": "Please provide a title for the goal."}), 400  # Fixed error message
 
     description = data.get("description")
     status = data.get("status", "PLANNED")
@@ -652,7 +650,6 @@ def create_goal():
 def get_goals_by_status():
     status = request.args.get("status")
 
-    # for debugging purposes
     if not status:
         return jsonify({"error": "Status is required."}), 400
 
@@ -670,7 +667,6 @@ def get_goals_by_status():
 def get_goals_by_period():
     period = request.args.get("period")
 
-    # for debugging purposes
     if not period:
         return jsonify({"error": "Period is required."}), 400
 
@@ -679,14 +675,14 @@ def get_goals_by_period():
     except ValueError:
         return jsonify({"error": f"Invalid period. Valid periods are: {[s.value for s in GoalPeriod]}"}), 400
 
-    goals = Goal.query.filter_by(status=period_enum).all()
+    goals = Goal.query.filter_by(period=period_enum).all()  # Fixed: should filter by period, not status
     return jsonify([goal.to_json() for goal in goals]), 200
 
 
 @app.route("/goals", methods=["GET"])
 @jwt_required()
 def get_user_goals():
-    user_id = request.args.get("user_id")
+    user_id = get_jwt_identity()  # Fixed: get from JWT instead of query params
 
     if not user_id:
         return jsonify({"error": "User ID is required."}), 400
@@ -768,7 +764,7 @@ def delete_goal(goal_id):
 def create_habit():
     data = request.json
 
-    user_id = data.get("user_id")
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "User ID is required to create a habit."}), 400
 
@@ -811,7 +807,7 @@ def create_habit():
     )
 
     habit.users.append(user)
-
+    user.habits.append(habit) 
     db.session.add(habit)
     db.session.commit()
 

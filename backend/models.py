@@ -118,6 +118,8 @@ class Task(db.Model):
             "status": self.status,
             "category": self.category
         }
+
+
 class Note(db.Model):
     __tablename__ = 'notes'
     id = db.Column(db.Integer, primary_key=True)
