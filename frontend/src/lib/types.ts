@@ -1,6 +1,5 @@
 
 export type TaskStatus = "Pending" | "In Progress" | "Completed" | "Canceled";
-export const taskStatuses: TaskStatus[] = ['Pending', 'In Progress', 'Completed', 'Canceled'];
 
 export type HabitDays =
   | "Sunday"
@@ -45,16 +44,6 @@ export interface Note {
   dateUpdated?: string;
   userId: number;
 }
-
-export interface Habit {
-  id: number;
-  title: string;
-  color: string;
-  users: number[];
-  status: HabitStatus;
-  habitDays: HabitDays;
-}
-
 export interface Goal {
   id: number;
   title: string;
@@ -70,4 +59,14 @@ export type CalendarEvent = {
   status: TaskStatus;
   category?: string;
   id: number;
+};
+
+export type Habit = {
+  id: number;
+  title: string;
+  color: string;
+  status: string;
+  habit_days: string;
+  targetDays: number[];
+  completedDays: number[];
 };
