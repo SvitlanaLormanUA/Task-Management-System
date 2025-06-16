@@ -7,7 +7,6 @@ import { AuthContext } from '@/auth/AuthContext';
 
 const PrivacySettings = () => {
   const { getAccessToken } = useContext(AuthContext);
-
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
