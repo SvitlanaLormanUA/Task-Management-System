@@ -95,13 +95,13 @@ const PrivacySettings = () => {
                         Reset
                     </button>
 
-                    <div className="request-section mt-6">
-                        <p className="mb-2">Request password change via email:</p>
-                        <button className="request-button bg-green-500 text-white px-4 py-2 rounded"
-                                onClick={handleRequest}>
-                            Request
-                        </button>
-                    </div>
+                    {/*<div className="request-section mt-6">*/}
+                    {/*    <p className="mb-2">Request password change via email:</p>*/}
+                    {/*    <button className="request-button bg-green-500 text-white px-4 py-2 rounded"*/}
+                    {/*            onClick={handleRequest}>*/}
+                    {/*        Request*/}
+                    {/*    </button>*/}
+                    {/*</div>*/}
                 </div>
             </div>
         </div>

@@ -54,26 +54,26 @@ const SettingsPage = () => (
 
         <ThemeSelector />
 
-        <div>
-          <p className="text-lg font-medium mb-2">Themes</p>
-          <div className="grid grid-cols-3 gap-4 max-w-md">
-            {[
-              { name: 'Theme 1', color: 'bg-yellow-300' },
-              { name: 'Theme 2', color: 'bg-pink-300' },
-              { name: 'Theme 3', color: 'bg-green-300' },
-              { name: 'Theme 4', color: 'bg-purple-300' },
-              { name: 'Theme 5', color: 'bg-cyan-300' },
-            ].map((theme, index) => (
-              <button
-                key={index}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-white border"
-              >
-                <span className={`w-4 h-4 rounded-full ${theme.color}`} />
-                {theme.name}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/*<div>*/}
+        {/*  <p className="text-lg font-medium mb-2">Themes</p>*/}
+        {/*  <div className="grid grid-cols-3 gap-4 max-w-md">*/}
+        {/*    {[*/}
+        {/*      { name: 'Theme 1', color: 'bg-yellow-300' },*/}
+        {/*      { name: 'Theme 2', color: 'bg-pink-300' },*/}
+        {/*      { name: 'Theme 3', color: 'bg-green-300' },*/}
+        {/*      { name: 'Theme 4', color: 'bg-purple-300' },*/}
+        {/*      { name: 'Theme 5', color: 'bg-cyan-300' },*/}
+        {/*    ].map((theme, index) => (*/}
+        {/*      <button*/}
+        {/*        key={index}*/}
+        {/*        className="flex items-center gap-2 px-4 py-2 rounded-md bg-white border"*/}
+        {/*      >*/}
+        {/*        <span className={`w-4 h-4 rounded-full ${theme.color}`} />*/}
+        {/*        {theme.name}*/}
+        {/*      </button>*/}
+        {/*    ))}*/}
+        {/*  </div>*/}
+        {/*</div>*/}
       </div>
     </main>
 

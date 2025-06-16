@@ -15,120 +15,123 @@ import CalendarPage from '@/pages/CalendarPage.tsx';
 import ToDoListPage from '@/pages/ToDoListPage.tsx';
 import MatrixPage from '@/pages/MatrixPage.tsx';
 import { ThemeProvider } from '@/components/ThemeContext';
+import { TimezoneProvider } from '@/components/TimezoneContext';
+
 
 function App() {
   return (
-    <ThemeProvider>
-      <div className="min-h-screen bg-blue-100">
-        <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/sign-up" element={<SignupPage />} />
-              <Route path="/error" element={<ErrorPage />} />
+    <TimezoneProvider>
+      <ThemeProvider>
+        <div className="min-h-screen bg-blue-100">
+          <BrowserRouter>
+            <AuthProvider>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/sign-up" element={<SignupPage />} />
+                <Route path="/error" element={<ErrorPage />} />
 
-              <Route path="/main" element={<SettingsPage />} />
-              <Route path="/pc" element={<CalendarPage />} />
-              <Route path="/lar" element={<LanguageAndRegion />} />
-              <Route path="/ns" element={<NotificationSettings />} />
-              <Route path="/ps" element={<PrivacySettings />} />
+                <Route path="/main" element={<SettingsPage />} />
+                <Route path="/pc" element={<CalendarPage />} />
+                <Route path="/lar" element={<LanguageAndRegion />} />
+                <Route path="/ns" element={<NotificationSettings />} />
+                <Route path="/ps" element={<PrivacySettings />} />
 
-              <Route path="/hbtr" element={<HabitTrackerPage />} />
+                <Route path="/hbtr" element={<HabitTrackerPage />} />
 
-              <Route path="/mainp" element={<ToDoListPage />} />
+                <Route path="/prp" element={<ProfilePage />} />
 
 
+                {/* Protected Routes */}
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <MainPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <SettingsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/notification-settings"
+                  element={
+                    <ProtectedRoute>
+                      <NotificationSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/privacy-settings"
+                  element={
+                    <ProtectedRoute>
+                      <PrivacySettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/language-settings"
+                  element={
+                    <ProtectedRoute>
+                      <LanguageAndRegion />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/habit-tracker"
+                  element={
+                    <ProtectedRoute>
+                      <HabitTrackerPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/calendar"
+                  element={
+                    <ProtectedRoute>
+                      <CalendarPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/todo-list"
+                  element={
+                    <ProtectedRoute>
+                      <ToDoListPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/matrix"
+                  element={
+                    <ProtectedRoute>
+                      <MatrixPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Protected Routes */}
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <MainPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <SettingsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings/notification-settings"
-                element={
-                  <ProtectedRoute>
-                    <NotificationSettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings/privacy-settings"
-                element={
-                  <ProtectedRoute>
-                    <PrivacySettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings/language-settings"
-                element={
-                  <ProtectedRoute>
-                    <LanguageAndRegion />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/habit-tracker"
-                element={
-                  <ProtectedRoute>
-                    <HabitTrackerPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/calendar"
-                element={
-                  <ProtectedRoute>
-                    <CalendarPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/todo-list"
-                element={
-                  <ProtectedRoute>
-                    <ToDoListPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/matrix"
-                element={
-                  <ProtectedRoute>
-                    <MatrixPage />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Catch-all for 404 */}
-              <Route path="*" element={<ErrorPage />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </div>
-    </ThemeProvider>
+                {/* Catch-all for 404 */}
+                <Route path="*" element={<ErrorPage />} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </div>
+      </ThemeProvider>
+    </TimezoneProvider>
   );
 }
 

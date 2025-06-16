@@ -8,7 +8,7 @@ const Sidebar: React.FC = () => {
       {[
         { label: 'Notifications', emoji: '🔔', active: false, path: '/settings/notification-settings' },
         { label: 'Appearance', emoji: '👁️', active: false, path: '/settings' },
-        { label: 'Language & region', emoji: '🌐', active: false, path: '/settings/language-settings' },
+        { label: 'Region', emoji: '🌐', active: false, path: '/settings/language-settings' },
         { label: 'Privacy', emoji: '🔒', active: false, path: '/settings/privacy-settings' },
         { label: 'Profile settings', emoji: '👤', active: false, path: '/login' },
       ].map((item) => (

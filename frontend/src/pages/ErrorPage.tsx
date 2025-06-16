@@ -34,7 +34,7 @@ const ErrorPage = () => {
                 </div>
 
                 <button className="bg-[#5c3d82] text-white px-6 py-3 rounded-full hover:bg-[#472f68] transition w-full">
-                    reach out to support
+                    <a href="mailto:akharchenko@kse.org.ua">reach out to support</a>
                 </button>
             </div>
         </div>
