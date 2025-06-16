@@ -255,7 +255,7 @@ useEffect(() => {
   
 
   const renderHeader = () => (
-    <div className="flex justify-between items-center mb-4">
+    <div className="flex justify-between items-center mb-4 dark:text-black">
       <button
         onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
         className="p-2 hover:bg-gray-100 rounded"
@@ -263,7 +263,7 @@ useEffect(() => {
       >
         ◄
       </button>
-      <h2 className="text-xl font-semibold">{format(currentMonth, 'MMMM yyyy')}</h2>
+      <h2 className="text-xl dark:text-black font-semibold">{format(currentMonth, 'MMMM yyyy')}</h2>
       <button
         onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
         className="p-2 hover:bg-gray-100 rounded"
@@ -277,9 +277,9 @@ useEffect(() => {
   const renderDays = () => {
     const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
     return (
-      <div className="grid grid-cols-7 text-center font-medium mb-2">
+      <div className="grid grid-cols-7 text-center font-medium mb-2 dark:text-black">
         {days.map((day) => (
-          <div key={day} className="p-2 text-gray-600">
+          <div key={day} className="p-2 text-gray-600 dark:text-black">
             {day}
           </div>
         ))}
@@ -329,7 +329,7 @@ useEffect(() => {
           <div
             key={day.toString()}
             className={`border h-24 p-1 cursor-pointer hover:bg-gray-50 relative ${
-              !isSameMonth(day, monthStart) ? 'bg-gray-100 text-gray-400' : 'bg-white'
+              !isSameMonth(day, monthStart) ? 'bg-gray-100 text-gray-400 dark:text-black' : 'bg-white'
             }`}
             onClick={() => {
               setSelectedDate(cloneDay);
@@ -343,7 +343,7 @@ useEffect(() => {
             }}
           >
             <div
-              className={`text-sm font-medium relative z-10 flex items-center justify-center w-6 h-6 ${
+              className={`text-sm font-medium relative z-10 dark:text-black flex items-center justify-center w-6 h-6 ${
                 isToday ? 'p-4 rounded-full text-white bg-[#614D7C]' : ''
               }`}
             >
@@ -363,7 +363,7 @@ useEffect(() => {
           taskSpans.push(
             <div
               key={`${event.id}-${weekStart.toISOString()}-${spanRow}`}
-              className={`absolute z-20 px-2 text-xs rounded shadow-sm truncate mt-5 cursor-pointer ${
+              className={`absolute z-20 px-2 text-xs dark:text-black rounded shadow-sm truncate mt-5 cursor-pointer ${
                 event.status === 'Completed'
                   ? 'bg-green-500 text-white'
                   : event.status === 'In Progress'

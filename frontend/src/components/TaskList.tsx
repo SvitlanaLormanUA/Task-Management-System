@@ -20,7 +20,7 @@ export default function TasksList({
 }: TasksListProps) {
   return (
     <div className='mt-6 p-4 bg-white border rounded-lg'>
-      <h3 className='text-lg font-semibold mb-3'>📋 All Tasks</h3>
+      <h3 className='text-lg font-semibold mb-3 dark:text-black'>📋 All Tasks</h3>
       <div className='space-y-2'>
         {tasks.map((task) => (
           <div key={task.id} className='flex items-center justify-between p-3 bg-gray-50 rounded'>

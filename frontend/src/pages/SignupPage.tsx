@@ -145,7 +145,7 @@ const SignupPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#d7e9f7] relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#d7e9f7] relative overflow-hidden dark:text-black">
       <img
         src="/images/cloud.webp"
         alt="Cloud background"
@@ -155,16 +155,16 @@ const SignupPage = () => {
         Create Your Account
       </h1>
       <div className="z-10 mb-6">
-        <div className="relative w-32 h-32 rounded-full border-4 border-white shadow-md overflow-hidden">
-          <img
-            src="/images/girl.webp"
-            alt="Profile Avatar"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md cursor-pointer">
-            <span className="text-sm text-gray-600">+</span>
-          </div>
-        </div>
+        {/*<div className="relative w-32 h-32 rounded-full border-4 border-white shadow-md overflow-hidden">*/}
+        {/*  <img*/}
+        {/*    src="/images/girl.webp"*/}
+        {/*    alt="Profile Avatar"*/}
+        {/*    className="w-full h-full object-cover"*/}
+        {/*  />*/}
+        {/*  <div className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md cursor-pointer">*/}
+        {/*    <span className="text-sm text-gray-600">+</span>*/}
+        {/*  </div>*/}
+        {/*</div>*/}
       </div>
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm z-10">
         {error && (

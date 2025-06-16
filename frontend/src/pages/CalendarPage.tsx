@@ -78,7 +78,7 @@ const CalendarPage = () => {
   };
 
   return (
-    <div className='bg-blue-100 min-h-screen'>
+    <div className='bg-blue-100 dark:bg-[#5d7196] min-h-screen'>
       <div className='flex'>
         <aside className='w-52 flex-shrink-0 bg-yellow-50 flex flex-col justify-between p-4 shadow-lg border-r border-yellow-200 sticky top-0 h-screen overflow-y-auto'>
           <Header className='absolute top-4 left-4 z-20 md:top-6 md:left-6' />
@@ -163,7 +163,7 @@ const CalendarPage = () => {
         </aside>
 
         <main className='flex-1 flex flex-col'>
-          <div className='flex justify-center gap-4 mb-4 bg-yellow-100 py-4'>
+          <div className='flex justify-center gap-4 mb-4 bg-yellow-100 dark:bg-[#5d7196] py-4'>
             {[
               { title: 'habit tracker', color: '#FAFAF5', path: '/habit-tracker' },
               { title: 'matrix', color: '#FBD443', path: '/matrix' },
@@ -179,7 +179,7 @@ const CalendarPage = () => {
               />
             ))}
           </div>
-          <div className='bg-blue-100'>
+          <div className='bg-blue-100 dark:bg-[#7a8fb6]'>
             <Calendar
               selectedStatuses={selectedStatuses}
               selectedCategories={selectedCategories}

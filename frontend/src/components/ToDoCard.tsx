@@ -249,7 +249,7 @@ const MacroCard = () => {
 
   return (
     <>
-      <div className="bg-white rounded-2xl p-4 shadow w-64 border border-gray-100">
+      <div className="bg-white rounded-2xl p-4 shadow w-64 border border-gray-100 dark:bg-[#11295e]">
         <div className="flex justify-between items-start mb-4">
           <h2 className="text-lg font-semibold">Macro 2</h2>
           <button

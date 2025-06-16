@@ -6,7 +6,7 @@ const MatrixPage = () => {
 
 
   return (
-    <div className="flex bg-blue-100 min-h-screen">
+    <div className="flex bg-blue-100 min-h-screen dark:bg-[#4682b4]">
 
 
       <Header className="absolute top-4 left-4 z-10 md:top-6 md:left-6" />
@@ -53,7 +53,7 @@ const MatrixPage = () => {
           ))}
         </div>
 
-        <div className="relative flex flex-col bg-blue-100 p-4">
+        <div className="relative flex flex-col bg-blue-100 p-4 dark:bg-[#4682b4]">
           {/* Background overlay */}
           <div className="absolute inset-0 opacity-30"></div>
           <div className="flex flex-1 relative z-10">

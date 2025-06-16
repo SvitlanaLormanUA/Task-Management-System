@@ -8,7 +8,7 @@ const NotificationSettings = () => {
     const [toTime, setToTime] = useState("20:00");
     return (
 
-        <div className="flex flex-row flex-grow bg-[#E1F0F9] text-gray-800 h-screen">
+        <div className="flex flex-row flex-grow bg-[#E1F0F9] text-gray-800 h-screen dark:bg-[#7a8fb6]">
             <aside className="w-64 bg-[#BBD7D9] p-4 flex flex-col justify-between">
 
                 <button
@@ -26,11 +26,11 @@ const NotificationSettings = () => {
                 </div>
 
                 <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Search"
-                      className="w-full px-3 py-2 rounded-full text-sm bg-gray-200"
-                    />
+                    {/*<input*/}
+                    {/*  type="text"*/}
+                    {/*  placeholder="Search"*/}
+                    {/*  className="w-full px-3 py-2 rounded-full text-sm bg-gray-200"*/}
+                    {/*/>*/}
                     <a
                       href="https://docs.google.com/document/d/1eOrF913VSX1qPp1aZ1DyNuyT0QKQm3Ib0wCnRA4NCqY/edit?usp=sharing"
                       className="text-sm text-gray-700 flex items-center gap-1">
@@ -101,7 +101,7 @@ const NotificationSettings = () => {
 
                 <div>
                     <label className="block font-medium mt-4 mb-2">Sound</label>
-                    <select className="border border-gray-300 rounded px-3 py-1 bg-white">
+                    <select className="border border-gray-300 rounded px-3 py-1 bg-white dark:bg-[#7a8fb6]">
                         <option>Din (Default)</option>
                         <option>Gong (Loud)</option>
 

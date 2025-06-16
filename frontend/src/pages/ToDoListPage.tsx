@@ -59,10 +59,10 @@ const ToDoListPage = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col ">
         {/* Top menu using Square */}
 
-        <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4">
+        <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4 ">
           {[
             { title: 'calendar', color: '#FAFAF5', path: '/calendar' },
             { title: 'matrix', color: '#FBD443', path: '/matrix' },

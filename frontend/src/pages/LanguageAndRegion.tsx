@@ -20,11 +20,11 @@ const LanguageAndRegion = () => {
                 </div>
 
                 <div className="space-y-2 mt-4">
-                    <input
-                      type="text"
-                      placeholder="Search"
-                      className="w-full px-3 py-2 rounded-full text-sm bg-gray-200"
-                    />
+                    {/*<input*/}
+                    {/*  type="text"*/}
+                    {/*  placeholder="Search"*/}
+                    {/*  className="w-full px-3 py-2 rounded-full text-sm bg-gray-200"*/}
+                    {/*/>*/}
                     <a
                       href="https://docs.google.com/document/d/1eOrF913VSX1qPp1aZ1DyNuyT0QKQm3Ib0wCnRA4NCqY/edit?usp=sharing"
                       className="text-sm text-gray-700 flex items-center gap-1">
@@ -42,10 +42,10 @@ const LanguageAndRegion = () => {
 
             <div className="max-w-md mx-auto mt-10 px-4">
                 {/* Language */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                <div className="mb-6 ">
+                    <label className="block text-sm font-medium text-gray-700 mb-2 ">Language</label>
                     <select
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-[#7a8fb6]">
                         <option>English UK (Default)</option>
                         <option>English US</option>
                         <option>Ukrainian (Native)</option>
@@ -61,7 +61,7 @@ const LanguageAndRegion = () => {
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
                     <select
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-[#7a8fb6]">
                         <option>(GMT+0) UTC</option>
                         <option>(GMT+1) Central European Time</option>
                         <option>(GMT+2) Eastern European Time (Kyiv)</option>

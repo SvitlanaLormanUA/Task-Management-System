@@ -19,9 +19,9 @@ const PrivacySettings = () => {
     };
 
     return (
-        <div className="privacy-settings flex min-h-screen">
+        <div className="privacy-settings flex min-h-screen ">
             {/* Sidebar */}
-            <aside className="w-64 bg-[#BBD7D9] p-4 flex flex-col justify-between">
+            <aside className="w-64 bg-[#BBD7D9] p-4 flex flex-col justify-between ">
                 <div>
                     <button
                         onClick={() => window.history.back()}
@@ -36,11 +36,11 @@ const PrivacySettings = () => {
                 </div>
 
                 <div className="space-y-2 mt-4">
-                    <input
-                      type="text"
-                      placeholder="Search"
-                      className="w-full px-3 py-2 rounded-full text-sm bg-gray-200"
-                    />
+                    {/*<input*/}
+                    {/*  type="text"*/}
+                    {/*  placeholder="Search"*/}
+                    {/*  className="w-full px-3 py-2 rounded-full text-sm bg-gray-200"*/}
+                    {/*/>*/}
                     <a
                       href="https://docs.google.com/document/d/1eOrF913VSX1qPp1aZ1DyNuyT0QKQm3Ib0wCnRA4NCqY/edit?usp=sharing"
                       className="text-sm text-gray-700 flex items-center gap-1">
@@ -57,7 +57,7 @@ const PrivacySettings = () => {
             </aside>
 
             {/* Content Area */}
-            <div className="flex-1 p-8">
+            <div className="flex-1 p-8 dark:bg-[#7a8fb6]">
                 <h2 className="text-2xl font-semibold mb-4">Change password:</h2>
 
                 <div className="space-y-4">

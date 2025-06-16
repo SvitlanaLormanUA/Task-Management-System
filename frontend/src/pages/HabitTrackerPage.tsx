@@ -66,9 +66,9 @@ const HabitTrackerPage = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col ">
         {/* Top menu using Square */}
-        <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4">
+        <div className="flex justify-center gap-4 mb-4 bg-yellow-100 py-4 ">
           {[
             { title: 'calendar', color: '#FAFAF5', path: '/calendar' },
             { title: 'matrix', color: '#FBD443', path: '/matrix' },
@@ -95,7 +95,7 @@ const HabitTrackerPage = () => {
         {/*</div>*/}
 
         {/* Yoga Section */}
-        <Card className="bg-blue-100 rounded-3xl mt-4 mb-6 ml-4 mr-4">
+        <Card className="bg-blue-100 rounded-3xl mt-4 mb-6 ml-4 mr-4 dark:bg-[#4682b4]">
           <CardContent className="p-6">
             <h3 className="text-xl font-semibold mb-2">Yoga</h3>
             <div className="flex gap-2 mb-2">
@@ -118,7 +118,7 @@ const HabitTrackerPage = () => {
         </Card>
 
         {/* Reading Section */}
-        <Card className="bg-pink-100 rounded-3xl mt-4 mb-6 ml-4 mr-4">
+        <Card className="bg-pink-100 rounded-3xl mt-4 mb-6 ml-4 mr-4 dark:bg-[#4682b4]">
           <CardContent className="p-6">
             <h3 className="text-xl font-semibold mb-2">Reading</h3>
             <div className="flex gap-2 mb-2">

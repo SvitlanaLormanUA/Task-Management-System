@@ -43,7 +43,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className='min-h-screen flex flex-col items-center justify-center bg-[#d7e9f7] relative overflow-hidden'>
+    <div className='min-h-screen flex flex-col items-center justify-center bg-[#d7e9f7] relative overflow-hidden dark:text-black'>
       <img
         src='./images/cloud.webp'
         alt='Cloud background'
@@ -56,15 +56,15 @@ const LoginPage = () => {
 
       <div className='flex flex-col items-center z-10 mb-4'>
         <img src='./images/logo.webp' alt='SynergyFlow Logo' className='w-48 mb-2' />
-        <span className='text-[#8699a6] font-medium text-lg'>SynergyFlow</span>
+        {/*<span className='text-[#8699a6] font-medium text-lg'>SynergyFlow</span>*/}
       </div>
 
       {/* Кіцик */}
-      <img
-        src='./images/cute_cat.webp'
-        alt='Cute cat'
-        className='absolute right-80 top-75 w-60 md:w-20 z-10'
-      />
+      {/*<img*/}
+      {/*  src='./images/cute_cat.webp'*/}
+      {/*  alt='Cute cat'*/}
+      {/*  className='absolute right-80 top-75 w-60 md:w-20 z-10'*/}
+      {/*/>*/}
 
       <div className='bg-white rounded-2xl shadow-lg p-6 w-[90%] max-w-sm z-10'>
         <form onSubmit={handleLogin} className='flex flex-col space-y-4'>
