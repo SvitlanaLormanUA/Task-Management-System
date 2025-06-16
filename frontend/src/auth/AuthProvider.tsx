@@ -13,7 +13,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   const logout = React.useCallback(async () => {
-    console.log('🔐 Logout called');
     const refreshToken = Cookies.get('refresh_token');
 
     if (refreshToken) {

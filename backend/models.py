@@ -147,11 +147,9 @@ class Habit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     color = db.Column(db.String(8), nullable=False)
-
-    users = db.relationship('User', secondary=user_habit, back_populates='habits')  # Fixed secondary table
-
-    status = db.Column(db.Enum(HabitStatus), nullable=False, default=HabitStatus.PLANNED)
-    habit_days = db.Column(db.Enum(HabitDays), nullable=False, default=HabitDays.MO)
+    status = db.Column(db.String(200), nullable=False, default='Planned')
+    habit_days = db.Column(db.String(200), nullable=False)
+    users = db.relationship('User', secondary='user_habit', back_populates='habits')
 
     def to_json(self):
         return {
@@ -159,10 +157,9 @@ class Habit(db.Model):
             "title": self.title,
             "color": self.color,
             "users": [user.id for user in self.users],
-            "status": self.status.value,
-            "habitDays": self.habit_days.value
+            "status": self.status,
+            "habitDays": self.habit_days
         }
-
 
 class Goal(db.Model):
     __tablename__ = 'goals'
