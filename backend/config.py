@@ -15,7 +15,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, origins=[
     "http://localhost:3000",  # React dev server
-    "http://localhost:5173"   # Vite dev server
+    "http://localhost:5178"   # Vite dev server
 ])
 
 # Turso configuration

@@ -13,19 +13,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   const logout = React.useCallback(async () => {
+    console.log('🔐 Logout called');
     const refreshToken = Cookies.get('refresh_token');
-    
+
     if (refreshToken) {
       try {
         await fetch('http://127.0.0.1:5000/logout', {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${refreshToken}`,
+            Authorization: `Bearer ${refreshToken}`,
             'Content-Type': 'application/json',
           },
         });
+        console.log('✅ Logout API call successful');
       } catch (error) {
-        console.error('Error during logout:', error);
+        console.error('❌ Error during logout:', error);
       }
     }
 
@@ -33,38 +35,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     Cookies.remove('refresh_token');
     Cookies.remove('user');
     setIsAuthenticated(false);
+    console.log('🔐 User logged out, redirecting to login');
     navigate('/login');
   }, [navigate]);
 
   const getAccessToken = (): string | null => {
     const token = Cookies.get('access_token');
+    console.log('🔑 Getting access token:', token ? 'Found' : 'Not found');
     return token === undefined ? null : token;
   };
-
 
   const isTokenExpired = React.useCallback((token: string): boolean => {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const currentTime = Math.floor(Date.now() / 1000);
-      // Add 5 minute buffer to refresh before actual expiration
-      return payload.exp < (currentTime + 300);
-    } catch {
+      const isExpired = payload.exp < currentTime + 300;
+      console.log('⏰ Token expiry check:', {
+        exp: payload.exp,
+        current: currentTime + 300,
+        isExpired,
+      });
+      return isExpired;
+    } catch (error) {
+      console.error('Error checking token expiration:', error);
       return true;
     }
   }, []);
 
   const refreshAccessToken = React.useCallback(async (): Promise<boolean> => {
+    console.log('🔄 Attempting to refresh access token...');
     const refreshToken = Cookies.get('refresh_token');
 
     if (!refreshToken) {
-      console.log('No refresh token available');
       logout();
       return false;
     }
-
-    // Check if refresh token is expired
     if (isTokenExpired(refreshToken)) {
-      console.log('Refresh token is expired');
       logout();
       return false;
     }
@@ -73,7 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await fetch('http://127.0.0.1:5000/refresh', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${refreshToken}`,
+          Authorization: `Bearer ${refreshToken}`,
           'Content-Type': 'application/json',
         },
       });
@@ -81,15 +87,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         Cookies.set('access_token', data.access_token, { expires: 7 });
-        console.log('Token refreshed successfully');
         return true;
       } else {
-        console.error('Failed to refresh token:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
         logout();
         return false;
       }
     } catch (error) {
-      console.error('Error refreshing token:', error);
+      console.error('Network error refreshing token:', error);
       logout();
       return false;
     }
@@ -100,12 +106,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await fetch('http://127.0.0.1:5000/validate-token', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
-      return response.ok;
-    } catch {
+      const isValid = response.ok;
+      console.log('🔍 Token validation result:', isValid ? 'Valid' : 'Invalid');
+      if (!isValid) {
+        console.log('Validation failed with status:', response.status);
+      }
+      return isValid;
+    } catch (error) {
+      console.error('Error validating token:', error);
       return false;
     }
   };
@@ -116,16 +128,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const refreshToken = Cookies.get('refresh_token');
 
       if (!accessToken || !refreshToken) {
+        setIsAuthenticated(false);
         setIsLoading(false);
         return;
       }
+
       if (isTokenExpired(accessToken)) {
-        console.log('Access token expired, attempting refresh...');
         const refreshSuccess = await refreshAccessToken();
         if (refreshSuccess) {
           setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
         }
       } else {
+        console.log('⏰ Access token not expired, validating...');
         const isValid = await validateToken(accessToken);
         if (isValid) {
           setIsAuthenticated(true);
@@ -133,25 +149,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const refreshSuccess = await refreshAccessToken();
           if (refreshSuccess) {
             setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
           }
         }
       }
-      
+
       setIsLoading(false);
     };
 
     initializeAuth();
-  }, []);
+  }, [refreshAccessToken, isTokenExpired]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-
+    if (!isAuthenticated) {
+      return;
+    }
     const checkTokenExpiration = async () => {
       const accessToken = Cookies.get('access_token');
-      
+
       if (accessToken && isTokenExpired(accessToken)) {
-        console.log('Token about to expire, refreshing...');
-        await refreshAccessToken();
+        const success = await refreshAccessToken();
+        if (!success) {
+          console.log('Periodic token refresh failed');
+        }
       }
     };
 
@@ -160,40 +181,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const handleFocus = () => {
       checkTokenExpiration();
     };
-    
+
     window.addEventListener('focus', handleFocus);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [isAuthenticated, refreshAccessToken]);
+  }, [isAuthenticated, refreshAccessToken, isTokenExpired]);
 
   const login = (tokens: { access_token: string; refresh_token: string }) => {
+    console.log('🔐 Login called with tokens');
     Cookies.set('access_token', tokens.access_token, { expires: 7 });
     Cookies.set('refresh_token', tokens.refresh_token, { expires: 7 });
     setIsAuthenticated(true);
   };
 
-
-  // Show loading state while initializing
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='text-lg'>Loading...</div>
       </div>
     );
   }
 
   return (
-    <AuthContext.Provider value={{
-      isAuthenticated,
-      login,
-      logout,
-      getAccessToken,
-      refreshAccessToken,
-      isLoading
-    }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        login,
+        logout,
+        getAccessToken,
+        refreshAccessToken,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
