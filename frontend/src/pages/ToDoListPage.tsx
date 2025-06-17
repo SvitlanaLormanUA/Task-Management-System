@@ -17,7 +17,7 @@ const ToDoListPage = () => {
       {/* Floating "+" button */}
       <button
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#FBD443] text-white text-3xl flex items-center justify-center shadow-lg hover:bg-[#FBD443] transition z-40"
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#FBD443] text-white text-3xl flex items-center justify-center shadow-lg hover:bg-[#FBD443] transition z-40 cursor-pointer"
       >
         +
       </button>

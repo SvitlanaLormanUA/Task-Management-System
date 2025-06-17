@@ -149,7 +149,7 @@ function ToDoCard() {
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value as typeof filter)}
-          className="border rounded-md px-3 py-1 text-sm"
+          className="border rounded-md px-3 py-1 text-sm cursor-pointer"
         >
           <option value="all">All Tasks</option>
           <option value="pending">Pending</option>
@@ -159,7 +159,7 @@ function ToDoCard() {
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="border rounded-md px-3 py-1 text-sm"
+          className="border rounded-md px-3 py-1 text-sm cursor-pointer"
         >
           {categories.map(category => (
             <option key={category} value={category}>

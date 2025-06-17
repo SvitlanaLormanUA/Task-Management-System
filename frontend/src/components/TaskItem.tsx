@@ -30,7 +30,7 @@ function TaskItem({ task, onToggle, onDelete, onEdit }: TaskItemProps) {
     <div className={`p-3 border rounded-lg bg-white shadow-sm ${isOverdue ? 'border-red-200' : 'border-gray-200'}`}>
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3 flex-1">
-          <button onClick={handleToggle} className="mt-0.5">
+          <button onClick={handleToggle} className="mt-0.5 cursor-pointer hover:bg-gray-100 rounded p-1 transition-colors">
             {isCompleted ? (
               <CheckSquare className="w-5 h-5 text-green-600" />
             ) : (
