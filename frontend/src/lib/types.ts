@@ -77,3 +77,57 @@ export interface CreateTaskData {
   dateDue?: string;
   status: 'Pending' | 'In Progress' | 'Completed';
 }
+
+export type ImportanceLevel = 'high' | 'low';
+export type UrgencyLevel = 'high' | 'low';
+
+export interface MatrixTask extends Task {
+  importance: ImportanceLevel;
+  urgency: UrgencyLevel;
+}
+
+export type QuadrantType = 'do-first' | 'schedule' | 'delegate' | 'eliminate';
+
+export interface Quadrant {
+  id: QuadrantType;
+  title: string;
+  description: string;
+  color: string;
+  importance: ImportanceLevel;
+  urgency: UrgencyLevel;
+}
+
+export const QUADRANTS: Quadrant[] = [
+  {
+    id: 'do-first',
+    title: 'DO FIRST',
+    description: 'Important & Urgent',
+    color: 'bg-red-200/80',
+    importance: 'high',
+    urgency: 'high'
+  },
+  {
+    id: 'schedule',
+    title: 'SCHEDULE',
+    description: 'Important & Not Urgent',
+    color: 'bg-green-200/80',
+    importance: 'high',
+    urgency: 'low'
+  },
+  {
+    id: 'delegate',
+    title: 'DELEGATE',
+    description: 'Not Important & Urgent',
+    color: 'bg-yellow-200/80',
+    importance: 'low',
+    urgency: 'high'
+  },
+  {
+    id: 'eliminate',
+    title: 'ELIMINATE',
+    description: 'Not Important & Not Urgent',
+    color: 'bg-gray-200/80',
+    importance: 'low',
+    urgency: 'low'
+  }
+];

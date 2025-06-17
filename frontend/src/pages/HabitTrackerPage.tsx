@@ -330,7 +330,10 @@ function HabitTrackerPage() {
         <div className='w-20 h-20 rounded-full bg-yellow-200 flex items-center justify-center mb-4'>
           <span className='text-2xl'>🐰</span>
         </div>
-        <button className='flex items-center gap-2 text-gray-700 hover:text-black hover:cursor-pointer text-sm' onClick={() => window.history.back()}>
+        <button
+          className='flex items-center gap-2 text-gray-700 hover:text-black hover:cursor-pointer text-sm'
+          onClick={() => window.history.back()}
+        >
           <span>←</span>
           Back
         </button>
