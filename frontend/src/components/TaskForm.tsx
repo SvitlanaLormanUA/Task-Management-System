@@ -54,7 +54,7 @@ export default function TaskForm({
   const isEditing = !!editingTaskId;
 
   return (
-    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 dark:text-black'>
       <div className='bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto'>
         <h3 className='text-lg font-medium mb-4'>
           {selectedDate && format(selectedDate, 'PPP')} {isEditing ? '(Editing Task)' : ''}
