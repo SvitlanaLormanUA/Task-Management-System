@@ -27,13 +27,13 @@ const ErrorPage = () => {
             </p>
 
             {/* Блок з кнопкою та котиком */}
-            <div className="relative bg-white rounded-2xl shadow-lg p-6 pt-12 w-[90%] max-w-sm z-10 mt-10">
+            <div className="relative bg-white rounded-2xl shadow-lg p-6 pt-12 w-[90%] max-w-md z-10 mt-10">
                 {/* Котик */}
-                <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-20 h-20">
+                <div className="absolute -top-20 left-1/2 transform -translate-x-4 size-60 cursor-pointer">
                     <img src="./images/cute_cat.webp" alt="cat" className="w-full h-full object-contain"/>
                 </div>
 
-                <button className="bg-[#5c3d82] text-white px-6 py-3 rounded-full hover:bg-[#472f68] transition w-full">
+                <button className="bg-[#5c3d82] text-white px-6 py-3 rounded-full hover:bg-[#472f68] transition w-full cursor-pointer">
                     <a href="mailto:akharchenko@kse.org.ua">reach out to support</a>
                 </button>
             </div>
