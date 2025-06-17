@@ -8,7 +8,7 @@
     "frontend": "cd frontend && npm run dev",
     "backend": "python3 backend/main.py",
     "start": "concurrently \"npm run backend\" \"npm run frontend\"",
-    "install": "npm install && cd frontend && npm install && cd ../backend && flask flask-cors mysql-connector-python python-dotenv libsql"
+    "installDep": "npm install && cd frontend && npm install && cd ../backend && pip install flask flask-cors mysql-connector-python python-dotenv libsql"
   },
   "repository": {
     "type": "git",
