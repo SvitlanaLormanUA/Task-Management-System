@@ -70,3 +70,10 @@ export type Habit = {
   targetDays: number[];
   completedDays: number[];
 };
+export interface CreateTaskData {
+  title: string;
+  description?: string;
+  category?: string;
+  dateDue?: string;
+  status: 'Pending' | 'In Progress' | 'Completed';
+}

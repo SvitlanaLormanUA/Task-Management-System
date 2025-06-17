@@ -1,288 +1,270 @@
-// import { Component, useState } from 'react';
-// import {
-//   CheckSquare,
-//   Clock,
-//   Calendar,
-//   AlertCircle,
-//   Square,
-//   X,
-// } from 'lucide-react';
-//
-// class Task extends Component<{ label: any, checked: any, dueTime: any, dueDate: any, isOverdue: any }> {
-//   render() {
-//     let { label, checked, dueTime, dueDate, isOverdue } = this.props;
-//     return (
-//       <div className="flex items-center gap-2 text-sm">
-//         <div className="text-red-600">
-//           {checked ? (
-//             <CheckSquare className="w-4 h-4" />
-//           ) : (
-//             <Square className="w-4 h-4" />
-//           )}
-//         </div>
-//         <span className={`${isOverdue ? 'text-red-600' : ''}`}>{label}</span>
-//         {isOverdue && (
-//           <AlertCircle className="w-4 h-4 text-red-600 ml-1" />
-//         )}
-//       </div>
-//     );
-//   }
-// }
-//
-// class CreateTaskModal extends Component<{ onClose: any }> {
-//   render() {
-//     let { onClose } = this.props;
-//     const [repeat, setRepeat] = useState(false);
-//     return (
-//       <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-//         <div className="bg-[#fdfcf9] rounded-3xl shadow-lg w-96 overflow-hidden">
-//           <div className="bg-purple-100 px-4 py-2 flex items-center justify-between">
-//             <div className="flex items-center gap-2">
-//               <div className="w-4 h-4" />
-//               <span className="font-medium">Create a task</span>
-//             </div>
-//             <button onClick={onClose}>
-//               <X className="w-5 h-5" />
-//             </button>
-//           </div>
-//
-//           <div className="p-4 space-y-4">
-//             <div>
-//               <label className="text-sm font-medium">Title</label>
-//               <input
-//                 type="text"
-//                 placeholder="Title"
-//                 className="w-full mt-1 border rounded-md px-2 py-1"
-//               />
-//             </div>
-//
-//             <div className="flex gap-2 text-purple-600 text-sm">
-//               <button className="bg-gray-100 px-3 py-1 rounded-md">Jun 10, 2024</button>
-//               <button className="bg-gray-100 px-3 py-1 rounded-md">9:41 AM</button>
-//             </div>
-//
-//             <div>
-//               <div className="flex items-center gap-2">
-//                 <span className="text-sm font-medium">Repeat</span>
-//                 <label className="relative inline-flex items-center cursor-pointer">
-//                   <input
-//                     type="checkbox"
-//                     className="sr-only peer"
-//                     checked={repeat}
-//                     onChange={() => setRepeat(!repeat)}
-//                   />
-//                   <div className="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:bg-black transition-all"></div>
-//                   <div
-//                     className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-//                 </label>
-//               </div>
-//
-//               {repeat && (
-//                 <div className="mt-2 flex flex-wrap gap-2">
-//                   {['day', 'week', 'month', 'custom'].map((opt) => (
-//                     <button
-//                       key={opt}
-//                       className="border border-gray-400 rounded-md px-3 py-1 text-sm"
-//                     >
-//                       {opt}
-//                     </button>
-//                   ))}
-//                 </div>
-//               )}
-//             </div>
-//
-//             <div className="flex justify-end gap-2">
-//               <button onClick={onClose} className="px-4 py-1 border rounded-md">Cancel</button>
-//               <button className="px-4 py-1 bg-black text-white rounded-md">Ok</button>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     );
-//   }
-// }
-//
-// const MacroCard = () => {
-//   const [showModal, setShowModal] = useState(false);
-//
-//   return (
-//     <>
-//       <div className="bg-white rounded-2xl p-4 shadow w-64 border border-gray-100">
-//         <div className="flex justify-between items-start mb-4">
-//           <h2 className="text-lg font-semibold">Macro 2</h2>
-//           <button
-//             className="text-gray-500 hover:text-gray-700"
-//             onClick={() => setShowModal(true)}
-//           >
-//             +
-//           </button>
-//         </div>
-//
-//         <div className="space-y-2">
-//           <Task label="Lecture 3" checked={true} />
-//           <Task label="HW2" checked={false} />
-//           <Task label="HW1" checked={false} />
-//         </div>
-//
-//         <div className="flex justify-between items-center border-t border-gray-200 pt-3 mt-3 text-xs text-gray-600">
-//           <div className="flex items-center gap-1">
-//             <Clock className="w-4 h-4" />
-//             <span className="text-red-600">1:23</span>
-//           </div>
-//           <div className="flex items-center gap-1">
-//             <Calendar className="w-4 h-4" />
-//             <span className="text-red-600">01.01.25</span>
-//           </div>
-//         </div>
-//       </div>
-//
-//       {showModal && <CreateTaskModal onClose={() => setShowModal(false)} />}
-//     </>
-//   );
-// };
-//
-// export default MacroCard;
+import { useState, useEffect } from 'react';
+import { useApiClient } from '@/api/useApiClient';
+import TaskItem from './TaskItem';
+import type { Task } from '@/lib/types';
 
-import { useState } from 'react';
-import {
-  CheckSquare,
-  Clock,
-  Calendar,
-  AlertCircle,
-  Square,
-  X,
-} from 'lucide-react';
+function ToDoCard() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    category: ''
+  });
+  const apiClient = useApiClient();
 
-// Функціональний компонент Task
-const Task = ({ label, checked = false, dueTime, dueDate, isOverdue = false }) => {
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('http://127.0.0.1:5000/tasks');
+      
+      if (response.ok) {
+        const tasksData = await response.json();
+        setTasks(tasksData);
+      } else {
+        console.error('Failed to fetch tasks');
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleTask = async (taskId: number, newStatus: string) => {
+    try {
+      const response = await apiClient.put(`http://127.0.0.1:5000/tasks/${taskId}`, { status: newStatus });
+      
+      if (response.ok) {
+        setTasks(prev => prev.map(task => 
+          task.id === taskId ? { ...task, status: newStatus as Task['status'] } : task
+        ));
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: number) => {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+    
+    try {
+      const response = await apiClient.delete(`http://127.0.0.1:5000/tasks/${taskId}`);
+      
+      if (response.ok) {
+        setTasks(prev => prev.filter(task => task.id !== taskId));
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setEditForm({
+      title: task.title || '',
+      description: task.description || '',
+      category: task.category || ''
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingTask) return;
+    
+    try {
+      const updateData = {
+        title: editForm.title,
+        description: editForm.description,
+        category: editForm.category
+      };
+
+      const response = await apiClient.put(`http://127.0.0.1:5000/tasks/${editingTask.id}`, updateData);
+      
+      if (response.ok) {
+        setTasks(prev => prev.map(task => 
+          task.id === editingTask.id 
+            ? { ...task, ...updateData }
+            : task
+        ));
+        setEditingTask(null);
+        setEditForm({ title: '', description: '', category: '' });
+      } else {
+        console.error('Failed to update task');
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTask(null);
+    setEditForm({ title: '', description: '', category: '' });
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const filteredTasks = tasks.filter(task => {
+    const statusMatch = filter === 'all' || 
+      (filter === 'pending' && task.status !== 'Completed') ||
+      (filter === 'completed' && task.status === 'Completed');
+    
+    const categoryMatch = categoryFilter === 'all' || task.category === categoryFilter;
+    
+    return statusMatch && categoryMatch;
+  });
+
+  const categories = ['all', ...Array.from(new Set(tasks.map(task => task.category).filter(Boolean)))];
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="space-y-3">
+            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <div className="text-red-600">
-        {checked ? (
-          <CheckSquare className="w-4 h-4" />
+    <div className="bg-white rounded-2xl p-6 shadow-sm">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold">My Tasks</h2>
+        <div className="text-sm text-gray-500">
+          {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as typeof filter)}
+          className="border rounded-md px-3 py-1 text-sm"
+        >
+          <option value="all">All Tasks</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+        </select>
+        
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="border rounded-md px-3 py-1 text-sm"
+        >
+          {categories.map(category => (
+            <option key={category} value={category}>
+              {category === 'all' ? 'All Categories' : category}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Edit Modal */}
+      {editingTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Edit Task</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Task title"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Task description"
+                  rows={3}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <input
+                  type="text"
+                  value={editForm.category}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Task category"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={handleCancelEdit}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tasks */}
+      <div className="space-y-3">
+        {filteredTasks.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p>No tasks found</p>
+            <p className="text-sm">Create your first task to get started!</p>
+          </div>
         ) : (
-          <Square className="w-4 h-4" />
+          filteredTasks.map(task => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              onToggle={handleToggleTask}
+              onDelete={handleDeleteTask}
+              onEdit={handleEditTask}
+            />
+          ))
         )}
       </div>
-      <span className={`${isOverdue ? 'text-red-600' : ''}`}>{label}</span>
-      {isOverdue && (
-        <AlertCircle className="w-4 h-4 text-red-600 ml-1" />
+
+      {/* Stats */}
+      {tasks.length > 0 && (
+        <div className="mt-6 pt-4 border-t border-gray-100">
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>Completed: {tasks.filter(t => t.status === 'Completed').length}</span>
+            <span>Pending: {tasks.filter(t => t.status !== 'Completed').length}</span>
+          </div>
+        </div>
       )}
     </div>
   );
-};
+}
 
-// Функціональний компонент CreateTaskModal
-const CreateTaskModal = ({ onClose }) => {
-  const [repeat, setRepeat] = useState(false);
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-[#fdfcf9] rounded-3xl shadow-lg w-96 overflow-hidden">
-        <div className="bg-purple-100 px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4" />
-            <span className="font-medium">Create a task</span>
-          </div>
-          <button onClick={onClose}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          <div>
-            <label className="text-sm font-medium">Title</label>
-            <input
-              type="text"
-              placeholder="Title"
-              className="w-full mt-1 border rounded-md px-2 py-1"
-            />
-          </div>
-
-          <div className="flex gap-2 text-purple-600 text-sm">
-            <button className="bg-gray-100 px-3 py-1 rounded-md">Jun 10, 2024</button>
-            <button className="bg-gray-100 px-3 py-1 rounded-md">9:41 AM</button>
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Repeat</span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={repeat}
-                  onChange={() => setRepeat(!repeat)}
-                />
-                <div className="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:bg-black transition-all"></div>
-                <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-              </label>
-            </div>
-
-            {repeat && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {['day', 'week', 'month', 'custom'].map((opt) => (
-                  <button
-                    key={opt}
-                    className="border border-gray-400 rounded-md px-3 py-1 text-sm"
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <button onClick={onClose} className="px-4 py-1 border rounded-md">Cancel</button>
-            <button className="px-4 py-1 bg-black text-white rounded-md">Ok</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Компонент MacroCard залишається як є
-const MacroCard = () => {
-  const [showModal, setShowModal] = useState(false);
-
-  return (
-    <>
-      <div className="bg-white rounded-2xl p-4 shadow w-64 border border-gray-100 dark:bg-[#11295e]">
-        <div className="flex justify-between items-start mb-4">
-          <h2 className="text-lg font-semibold">Macro 2</h2>
-          <button
-            className="text-gray-500 hover:text-gray-700"
-            onClick={() => setShowModal(true)}
-          >
-            +
-          </button>
-        </div>
-
-        <div className="space-y-2">
-          <Task label="Lecture 3" checked={true} />
-          <Task label="HW2" checked={false} />
-          <Task label="HW1" checked={false} />
-        </div>
-
-        <div className="flex justify-between items-center border-t border-gray-200 pt-3 mt-3 text-xs text-gray-600">
-          <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            <span className="text-red-600">1:23</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" />
-            <span className="text-red-600">01.01.25</span>
-          </div>
-        </div>
-      </div>
-
-      {showModal && <CreateTaskModal onClose={() => setShowModal(false)} />}
-    </>
-  );
-};
-
-export default MacroCard;
-
-
+export default ToDoCard;

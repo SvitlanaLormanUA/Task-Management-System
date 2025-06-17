@@ -16,7 +16,7 @@ const MainPage = () => (
                     <img src="./images/calendar.webp" alt="Calendar Icon" className='mt-4'/>
                 </Square>
                 <Square title="to-do list" color="#FAFAF5" onClick={() => window.location.href = '/todo-list'}>
-                    <img src="./images/todolist.webp" alt="To-Do List" className='mt-4'/>
+                    <img src="./images/to-do.webp" alt="To-Do List" className='mt-4'/>
                 </Square>
                 <Square title="habit tracker" color="#FFF7D8" onClick={() => window.location.href = '/habit-tracker'}>
                     <img src="./images/habits.webp" alt="Habit Traker" className='mt-4'/>
