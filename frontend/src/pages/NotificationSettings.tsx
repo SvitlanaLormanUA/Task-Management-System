@@ -142,7 +142,7 @@ const NotificationSettings = () => {
                     </label>
                     <label className="block">
                         <input type="checkbox" defaultChecked className="mr-2"/>
-                        Goals
+                        Notes
                     </label>
                 </div>
             </div>

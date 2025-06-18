@@ -13,6 +13,8 @@ from flask_jwt_extended import (
 from datetime import timedelta
 from dateutil.parser import parse 
 from config import sync_after_commit
+
+
 # персоналізована сторінка?
 @app.route("/", methods=["GET"])
 @jwt_required() 
@@ -223,7 +225,9 @@ def refresh():
     return jsonify({"access_token": new_access_token}), 200
 
 # --------------------------------------------Note--------------------------------------------
-@app.route("/notes", methods=["PATCH"])
+
+
+@app.route("/notes", methods=["PUT"])
 @jwt_required()
 def update_note():
     data = request.json
@@ -249,7 +253,21 @@ def update_note():
     if content:
         note.content = content
 
-    date_updated = data.get("dateUpdated")
+    def parse_date(date_str):
+        if not date_str:
+            return None
+        try:
+            return parse(date_str)
+        except (ValueError, TypeError):
+            return None
+        
+    date_created = parse_date(data.get("dateCreated"))
+    date_updated = parse_date(data.get("dateUpdated"))
+    folder_id = data.get("folderId")
+    if folder_id is not None:  # Check if folder_id is provided
+        note.folder_id = int(folder_id) if folder_id else None
+    if date_created:
+        note.date_created = date_created
     if date_updated:
         note.date_updated = date_updated
 
@@ -290,6 +308,7 @@ def get_note(note_id):
 @app.route("/notes", methods=["POST"])
 @jwt_required()
 def create_note():
+    
     data = request.json
 
     user_id = get_jwt_identity()  # Fixed: get from JWT instead of request data
@@ -307,14 +326,25 @@ def create_note():
         
     title = data.get("title")
     content = data.get("content")
-    date_created = data.get("dateCreated")
-    date_updated = data.get("dateUpdated")
+
+    def parse_date(date_str):
+        if not date_str:
+            return None
+        try:
+            return parse(date_str)
+        except (ValueError, TypeError):
+            return None
+        
+    date_created = parse_date(data.get("dateCreated"))
+    date_updated = parse_date(data.get("dateUpdated"))
+    folder_id = data.get("folderId") 
 
     note = Note(
         title=title,
         content=content,
         date_created=date_created,
         date_updated=date_updated,
+        folder_id=folder_id
     )
 
     user.notes.append(note)  
@@ -352,10 +382,26 @@ def update_note_by_id(note_id):
     if content:
         note.content = content
 
-    date_updated = data.get("dateUpdated")
+    def parse_date(date_str):
+        if not date_str:
+            return None
+        try:
+            return parse(date_str)
+        except (ValueError, TypeError):
+            return None
+        
+    date_created = parse_date(data.get("dateCreated"))
+    date_updated = parse_date(data.get("dateUpdated"))    
+
+    if date_created:
+        note.date_created = date_created
     if date_updated:
         note.date_updated = date_updated
 
+    folder_id = data.get("folderId")
+    if folder_id is not None: 
+        note.folder_id = int(folder_id) if folder_id else None
+        
     db.session.commit()
 
     return jsonify(note.to_json()), 200

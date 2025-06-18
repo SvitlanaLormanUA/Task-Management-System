@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useApiClient } from '@/api/useApiClient';
 import Cookies from 'js-cookie';
 
- 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -16,6 +15,7 @@ const SignupPage = () => {
   const [userExists, setUserExists] = useState(false);
   const navigate = useNavigate();
   const apiClient = useApiClient();
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -46,37 +46,40 @@ const SignupPage = () => {
     setLoading(true);
     setError('');
 
-
     try {
-      const response = await apiClient.post('http://127.0.0.1:5000/signup', { 
+      // Fixed: Handle apiClient response properly
+      const data = await apiClient.post('http://127.0.0.1:5000/signup', { 
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
-       }); 
+      }); 
 
-      if (!response.ok) {
-        throw new Error('Invalid email or password');
-      }
-
-      const data = await response.json();
-    
+      // Store tokens and user data
       Cookies.set('access_token', data.access_token, { expires: 7 });
       Cookies.set('refresh_token', data.refresh_token, { expires: 7 });
       Cookies.set('user', JSON.stringify(data.user), { expires: 7 });
 
       setSuccess(true);
-
       setTimeout(() => navigate('/'), 2000);
+
     } catch (err) {
-      const error = err as any;
-      if (error.response?.data?.error === 'User already exists' || error.response?.status === 409 || error.message === 'USER_EXISTS') {
+      console.error('Signup error:', err);
+      
+      // Handle different error scenarios
+      const errorMessage = err.response?.data?.error || err.message || 'An error occurred';
+      const statusCode = err.response?.status;
+      
+      if (errorMessage.includes('User already exists') || 
+          errorMessage.includes('USER_EXISTS') || 
+          statusCode === 409) {
         setError('User already exists. Want to login?');
         setUserExists(true);
         setTimeout(() => navigate('/login'), 3000);
       } else {
-        setError(error.response?.data?.error || 'User already exists. Want to login?');
+        setError(errorMessage === 'Invalid email or password' ? 
+                'Please check your email and password' : 
+                errorMessage);
       }
-      console.error('Signup error:', err);
     } finally {
       setLoading(false);
     }
@@ -155,16 +158,7 @@ const SignupPage = () => {
         Create Your Account
       </h1>
       <div className="z-10 mb-6">
-        {/*<div className="relative w-32 h-32 rounded-full border-4 border-white shadow-md overflow-hidden">*/}
-        {/*  <img*/}
-        {/*    src="/images/girl.webp"*/}
-        {/*    alt="Profile Avatar"*/}
-        {/*    className="w-full h-full object-cover"*/}
-        {/*  />*/}
-        {/*  <div className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md cursor-pointer">*/}
-        {/*    <span className="text-sm text-gray-600">+</span>*/}
-        {/*  </div>*/}
-        {/*</div>*/}
+        {/* Avatar section commented out */}
       </div>
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm z-10">
         {error && (

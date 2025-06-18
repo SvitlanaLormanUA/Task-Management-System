@@ -36,15 +36,16 @@ export interface Task {
   category?: string;
 }
 
-export interface Note {
+export type Note = {
   id: number;
   title: string;
   content?: string;
   dateCreated?: string; 
   dateUpdated?: string;
+  folderId?: number; // Optional, if the note belongs to a folder
   userId: number;
 }
-export interface Goal {
+export type Goal = {
   id: number;
   title: string;
   description?: string;
@@ -131,3 +132,11 @@ export const QUADRANTS: Quadrant[] = [
     urgency: 'low'
   }
 ];
+
+
+
+export type Folder = {
+  id: number;
+  name: string;
+  noteCount: number;
+}

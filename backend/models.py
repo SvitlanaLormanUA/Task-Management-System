@@ -125,22 +125,22 @@ class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=True)
+    folder_id = db.Column(db.Integer, nullable=True) 
     date_created = db.Column(db.DateTime, nullable=True)
     date_updated = db.Column(db.DateTime, nullable=True)
-
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    user = db.relationship('User', back_populates='notes')  
+    user = db.relationship('User', back_populates='notes')
 
     def to_json(self):
         return {
             "id": self.id,
             "title": self.title,
             "content": self.content,
-            "dateCreated": self.date_created,
-            "dateUpdated": self.date_updated,
-            "userId": self.user_id
+            "folder_id": self.folder_id,  # Додайте це
+            "date_created": self.date_created.isoformat() if self.date_created else None,
+            "date_updated": self.date_updated.isoformat() if self.date_updated else None,
+            "user_id": self.user_id
         }
-
 
 class Habit(db.Model):
     __tablename__ = 'habits'

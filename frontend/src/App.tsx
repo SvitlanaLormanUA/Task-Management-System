@@ -16,6 +16,7 @@ import ToDoListPage from '@/pages/ToDoListPage.tsx';
 import MatrixPage from '@/pages/MatrixPage.tsx';
 import { ThemeProvider } from '@/components/ThemeContext';
 import { TimezoneProvider } from '@/components/TimezoneContext';
+import NotesPage from './pages/NotesPage';
 
 
 function App() {
@@ -120,6 +121,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <MatrixPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/notes"
+                  element={
+                    <ProtectedRoute>
+                      <NotesPage />
                     </ProtectedRoute>
                   }
                 />

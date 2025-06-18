@@ -23,13 +23,13 @@ const MainPage = () => (
                 </Square>
             </div>
             <div className="flex flex-col md:flex-row justify-center gap-8">
-                <Square title="notes | beta" color="#FEF9F5">
+                <Square title="notes | beta" color="#FEF9F5" onClick={() => window.location.href = '/notes'}>
                     <img src="./images/notes.webp" alt="Quick Notes" className='mt-4'/>
                 </Square>
                 <Square title="eisenhower matrix" color="#FBD443" onClick={() => window.location.href = '/matrix'}>
                     <img src="./images/matrix.webp" alt="Eisenhower Matrix" className='mt-8 ml-8 size-18'/>
                 </Square>
-                <Square title="goals | beta" color="#F3D9DA">
+                <Square title="goals | beta" color="#F3D9DA" onClick={() => window.location.href = '/error'}>
                     <img src="./images/planet.webp" alt="Goals" className='mt-4'/>
                 </Square>
             </div>

@@ -168,7 +168,7 @@ const CalendarPage = () => {
               { title: 'habit tracker', color: '#FAFAF5', path: '/habit-tracker' },
               { title: 'matrix', color: '#FBD443', path: '/matrix' },
               { title: 'to-do lists', color: '#FFF7D8', path: '/todo-list' },
-              { title: 'goals | beta', color: '#F3D9DA', path: '/error' },
+              { title: 'notes | beta', color: '#F3D9DA', path: '/notes' },
             ].map((tab) => (
               <Square
                 key={tab.title}
