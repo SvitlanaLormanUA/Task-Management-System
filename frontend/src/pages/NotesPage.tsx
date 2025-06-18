@@ -1,56 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Plus, Settings, User, Image, Type, FileText, Copy, Trash2, Users, Heart, Printer, Download, Maximize2, MoreHorizontal, List, AlignLeft, Bold, Italic, Underline, Link, Code, Folder, FolderOpen, ChevronRight, ChevronDown } from 'lucide-react';
 
-// Mock data for demonstration
-const mockNotes = [
-  {
-    id: 1,
-    title: "Meeting Notes",
-    content: "This is a note about the team meeting. We discussed project timelines and deliverables.\n\nAction items:\n- Complete design mockups\n- Review code changes\n- Schedule client call",
-    dateCreated: new Date('2024-06-15').toISOString(),
-    dateUpdated: new Date('2024-06-18').toISOString(),
-    userId: 1,
-    folderId: 1
-  },
-  {
-    id: 2,
-    title: "Project Ideas",
-    content: "Brainstorming session for new features:\n\n1. Dark mode implementation\n2. Mobile app development\n3. Integration with third-party APIs\n\nPriority: High for dark mode",
-    dateCreated: new Date('2024-06-14').toISOString(),
-    dateUpdated: new Date('2024-06-17').toISOString(),
-    userId: 1,
-    folderId: 1
-  },
-  {
-    id: 3,
-    title: "Personal Goals",
-    content: "2024 Goals:\n- Learn React Native\n- Complete certification\n- Read 12 books\n- Exercise 3x per week\n\nProgress tracking needed.",
-    dateCreated: new Date('2024-06-10').toISOString(),
-    dateUpdated: new Date('2024-06-16').toISOString(),
-    userId: 1,
-    folderId: 2
-  },
-  {
-    id: 4,
-    title: "Recipe Collection",
-    content: "Favorite recipes to try:\n\n🍝 Pasta Carbonara\n🥗 Mediterranean Salad\n🍰 Chocolate Cake\n\nNeed to organize shopping list.",
-    dateCreated: new Date('2024-06-12').toISOString(),
-    dateUpdated: new Date('2024-06-15').toISOString(),
-    userId: 1,
-    folderId: 2
-  },
-  {
-    id: 5,
-    title: "Book Notes",
-    content: "Currently reading: 'The Pragmatic Programmer'\n\nKey takeaways:\n- DRY principle\n- Code reviews importance\n- Testing strategies\n\nNext: 'Clean Code'",
-    dateCreated: new Date('2024-06-11').toISOString(),
-    dateUpdated: new Date('2024-06-14').toISOString(),
-    userId: 1,
-    folderId: 3
-  }
-];
+// API Client Hook (assuming this exists in your project)
+const useApiClient = () => {
+  const apiCall = async (url, options = {}) => {
+    const token = localStorage.getItem('authToken'); // Adjust based on your auth implementation
+    
+    const defaultOptions = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+    };
 
-// Toolbar Component
+    const response = await fetch(url, {
+      ...defaultOptions,
+      ...options,
+      headers: {
+        ...defaultOptions.headers,
+        ...options.headers,
+      },
+    });
+
+    return response;
+  };
+
+  return {
+    get: (url) => apiCall(url, { method: 'GET' }),
+    post: (url, data) => apiCall(url, { method: 'POST', body: JSON.stringify(data) }),
+    put: (url, data) => apiCall(url, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (url) => apiCall(url, { method: 'DELETE' }),
+  };
+};
+
 const EditorToolbar = ({ onAction }) => {
   const toolbarItems = [
     { icon: Bold, action: 'bold', tooltip: 'Bold' },
@@ -140,7 +122,7 @@ const EditorToolbar = ({ onAction }) => {
 };
 
 const NotesPage = () => {
-  const [notes, setNotes] = useState(mockNotes);
+  const [notes, setNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState('');
@@ -149,6 +131,39 @@ const NotesPage = () => {
   const [activeFolder, setActiveFolder] = useState(0);
   const [expandedFolders, setExpandedFolders] = useState(new Set([1, 2, 3, 4, 5, 6]));
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+
+  const apiClient = useApiClient();
+  const API_BASE_URL = 'http://127.0.0.1:5000';
+
+  // Fetch notes from API
+  const fetchNotes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await apiClient.get(`http://127.0.0.1:5000/notes`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error || 'Failed to fetch notes');
+      }
+      
+      const fetchedNotes = await response.json();
+      setNotes(fetchedNotes);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching notes:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load notes on component mount
+  useEffect(() => {
+    fetchNotes();
+  }, []);
 
   // Mock folders data with better organization
   const folders = [
@@ -164,6 +179,7 @@ const NotesPage = () => {
   // Filter notes based on active folder
   const filteredNotes = activeFolder === 0 ? notes : notes.filter(note => note.folderId === activeFolder);
 
+  // Create new note via API
   const handleCreateNote = async () => {
     if (!newNoteTitle.trim()) {
       setError('Note title is required');
@@ -174,52 +190,112 @@ const NotesPage = () => {
       return;
     }
     
-    const newNote = {
-      id: Date.now(),
-      title: newNoteTitle,
-      content: '',
-      folderId: selectedFolderId,
-      dateCreated: new Date().toISOString(),
-      dateUpdated: new Date().toISOString(),
-      userId: 1
-    };
-    
-    setNotes(prev => [...prev, newNote]);
-    setSelectedNote(newNote);
-    setEditingContent(newNote.content);
-    setIsCreating(false);
-    setNewNoteTitle('');
-    setActiveFolder(selectedFolderId);
-    setError(null);
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const newNoteData = {
+        title: newNoteTitle,
+        content: '',
+        folderId: selectedFolderId,
+        dateCreated: new Date().toISOString(),
+        dateUpdated: new Date().toISOString(),
+      };
+      
+      const response = await apiClient.post(`${API_BASE_URL}/notes`, newNoteData);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error || 'Failed to create note');
+      }
+      
+      const createdNote = await response.json();
+      
+      setNotes(prev => [...prev, createdNote]);
+      setSelectedNote(createdNote);
+      setEditingContent(createdNote.content || '');
+      setIsCreating(false);
+      setNewNoteTitle('');
+      setActiveFolder(selectedFolderId);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error creating note:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSelectNote = (note) => {
     setSelectedNote(note);
-    setEditingContent(note.content);
+    setEditingContent(note.content || '');
   };
 
+  // Update note content via API
   const handleUpdateContent = async () => {
-    if (selectedNote && editingContent !== selectedNote.content) {
-      const updatedNote = {
-        ...selectedNote,
+    if (!selectedNote || editingContent === selectedNote.content) {
+      return;
+    }
+    
+    try {
+      setError(null);
+      
+      const updatedData = {
+        title: selectedNote.title,
         content: editingContent,
+        folderId: selectedNote.folderId,
         dateUpdated: new Date().toISOString()
       };
+      
+      const response = await apiClient.put(`${API_BASE_URL}/notes/${selectedNote.id}`, updatedData);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error || 'Failed to update note');
+      }
+      
+      const updatedNote = await response.json();
+      
       setNotes(prev => prev.map(note => 
         note.id === selectedNote.id ? updatedNote : note
       ));
       setSelectedNote(updatedNote);
+      setLastSaved(new Date());
+      
+    } catch (err) {
+      setError(err.message);
+      console.error('Error updating note:', err);
     }
   };
 
+  // Delete note via API
   const handleDeleteNote = async (noteId) => {
-    setNotes(prev => prev.filter(note => note.id !== noteId));
-    if (selectedNote?.id === noteId) {
-      setSelectedNote(null);
-      setEditingContent('');
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await apiClient.delete(`${API_BASE_URL}/notes/${noteId}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error || 'Failed to delete note');
+      }
+      
+      setNotes(prev => prev.filter(note => note.id !== noteId));
+      
+      if (selectedNote?.id === noteId) {
+        setSelectedNote(null);
+        setEditingContent('');
+      }
+      
+    } catch (err) {
+      setError(err.message);
+      console.error('Error deleting note:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Move note to different folder via API
   const handleMoveNote = async (noteId, newFolderId) => {
     const validFolder = folders.find(folder => folder.id === newFolderId && folder.id !== 0);
     if (!validFolder) {
@@ -227,21 +303,41 @@ const NotesPage = () => {
       return;
     }
     
-    const updatedNote = notes.find(note => note.id === noteId);
-    if (updatedNote) {
-      const newNote = {
-        ...updatedNote,
+    const noteToMove = notes.find(note => note.id === noteId);
+    if (!noteToMove) {
+      setError('Note not found.');
+      return;
+    }
+    
+    try {
+      setError(null);
+      
+      const updatedData = {
+        ...noteToMove,
         folderId: newFolderId,
         dateUpdated: new Date().toISOString()
       };
       
+      const response = await apiClient.put(`${API_BASE_URL}/notes/${noteId}`, updatedData);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error || 'Failed to move note');
+      }
+      
+      const updatedNote = await response.json();
+      
       setNotes(prev => prev.map(note => 
-        note.id === noteId ? newNote : note
+        note.id === noteId ? updatedNote : note
       ));
       
       if (selectedNote?.id === noteId) {
-        setSelectedNote(newNote);
+        setSelectedNote(updatedNote);
       }
+      
+    } catch (err) {
+      setError(err.message);
+      console.error('Error moving note:', err);
     }
   };
 
@@ -323,6 +419,7 @@ const NotesPage = () => {
           <button
             onClick={() => setIsCreating(!isCreating)}
             className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+            disabled={loading}
           >
             <Plus className="w-4 h-4" />
             Create a note
@@ -338,6 +435,7 @@ const NotesPage = () => {
                   onChange={(e) => setNewNoteTitle(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter note title"
+                  disabled={loading}
                 />
               </div>
               
@@ -347,6 +445,7 @@ const NotesPage = () => {
                   value={selectedFolderId}
                   onChange={(e) => setSelectedFolderId(parseInt(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loading}
                 >
                   {folders.filter(f => !f.isSpecial).map(folder => (
                     <option key={folder.id} value={folder.id}>{folder.name}</option>
@@ -358,24 +457,46 @@ const NotesPage = () => {
                 <button
                   onClick={() => setIsCreating(false)}
                   className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+                  disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateNote}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  disabled={loading}
                 >
-                  Create
+                  {loading ? 'Creating...' : 'Create'}
                 </button>
               </div>
             </div>
           )}
         </div>
 
+        {/* Loading Indicator */}
+        {loading && (
+          <div className="mx-4 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-600">Loading...</p>
+          </div>
+        )}
+
         {/* Error Display */}
         {error && (
           <div className="mx-4 mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
             <p className="text-sm text-red-600">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="text-xs text-red-500 hover:text-red-700 mt-1"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* Last Saved Indicator */}
+        {lastSaved && (
+          <div className="mx-4 mb-2 text-xs text-gray-500">
+            Last saved: {lastSaved.toLocaleTimeString()}
           </div>
         )}
 
@@ -441,25 +562,26 @@ const NotesPage = () => {
                       >
                         <h4 className="text-sm font-medium text-gray-800 truncate">{note.title}</h4>
                         <p className="text-xs text-gray-500 mt-1 line-clamp-2 truncate">
-                          {note.content.substring(0, 60)}...
+                          {(note.content || '').substring(0, 60)}...
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          {new Date(note.dateUpdated).toLocaleDateString()}
+                          {new Date(note.dateUpdated || note.date_updated).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-2">
                         <select
-                          value={note.folderId || 1}
+                          value={note.folderId || note.folder_id || 1}
                           onChange={(e) => handleMoveNote(note.id, parseInt(e.target.value))}
                           className="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           title="Move to folder"
                           onClick={(e) => e.stopPropagation()}
+                          disabled={loading}
                         >
                           {folders.filter(f => !f.isSpecial).map(folder => (
                             <option 
                               key={folder.id} 
                               value={folder.id}
-                              disabled={note.folderId === folder.id}
+                              disabled={note.folderId === folder.id || note.folder_id === folder.id}
                             >
                               {folder.name}
                             </option>
@@ -468,10 +590,13 @@ const NotesPage = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteNote(note.id);
+                            if (window.confirm('Are you sure you want to delete this note?')) {
+                              handleDeleteNote(note.id);
+                            }
                           }}
-                          className="p-1 text-red-500 hover:bg-red-50 rounded-full"
+                          className="p-1 text-red-500 hover:bg-red-50 rounded-full disabled:opacity-50"
                           title="Delete note"
+                          disabled={loading}
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -511,13 +636,13 @@ const NotesPage = () => {
                     <h2 className="text-2xl font-semibold text-gray-800">{selectedNote.title}</h2>
                     <span 
                       className="px-2 py-1 text-xs rounded-full text-white font-medium"
-                      style={{ backgroundColor: folders.find(f => f.id === selectedNote.folderId)?.color || '#6B7280' }}
+                      style={{ backgroundColor: folders.find(f => f.id === (selectedNote.folderId || selectedNote.folder_id))?.color || '#6B7280' }}
                     >
-                      {folders.find(f => f.id === selectedNote.folderId)?.name || 'Unknown'}
+                      {folders.find(f => f.id === (selectedNote.folderId || selectedNote.folder_id))?.name || 'Unknown'}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500">
-                    Last updated: {new Date(selectedNote.dateUpdated).toLocaleDateString()}
+                    Last updated: {new Date(selectedNote.dateUpdated || selectedNote.date_updated).toLocaleDateString()}
                   </p>
                 </div>
               </div>
