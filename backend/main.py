@@ -225,8 +225,6 @@ def refresh():
     return jsonify({"access_token": new_access_token}), 200
 
 # --------------------------------------------Note--------------------------------------------
-
-
 @app.route("/notes", methods=["PUT"])
 @jwt_required()
 def update_note():
