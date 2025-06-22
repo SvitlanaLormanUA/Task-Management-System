@@ -43,14 +43,14 @@ const SettingsPage = () => (
     {/* Main content */}
     <main className="flex-1 bg-blue-100 dark:bg-[#7a8fb6] p-10">
       <div className="max-w-2xl">
-        <label className="block mb-4">
-          <span className="text-lg font-medium">Font</span>
-          <select className="mt-1 block w-60 px-3 py-2 border rounded-md">
-            <option>Lato (Default)</option>
-            <option>Ariel (Classic)</option>
+        {/*<label className="block mb-4">*/}
+        {/*  <span className="text-lg font-medium">Font</span>*/}
+        {/*  <select className="mt-1 block w-60 px-3 py-2 border rounded-md">*/}
+        {/*    <option>Lato (Default)</option>*/}
+        {/*    <option>Ariel (Classic)</option>*/}
 
-          </select>
-        </label>
+        {/*  </select>*/}
+        {/*</label>*/}
 
         <ThemeSelector />
 

@@ -18,7 +18,6 @@ import { ThemeProvider } from '@/components/ThemeContext';
 import { TimezoneProvider } from '@/components/TimezoneContext';
 import NotesPage from './pages/NotesPage';
 
-
 function App() {
   return (
     <TimezoneProvider>
@@ -40,7 +39,7 @@ function App() {
 
                 <Route path="/hbtr" element={<HabitTrackerPage />} />
 
-                <Route path="/prp" element={<ProfilePage />} />
+                <Route path="/prp" element={<ToDoListPage />} />
 
 
                 {/* Protected Routes */}
